@@ -1,0 +1,124 @@
+# Compiled Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Static libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared Object files
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+*.axf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+*.dbg*
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+# Archive files
+*.rar
+
+*.d
+*.yml
+*.json
+
+# Other file formats
+*.crf
+*.htm
+*.dep
+*.bak
+*.lnp
+*.lst
+*.ini
+*.iex
+*.sct
+*.scvd
+*.uvguix*
+*.mxproject
+*.pyc
+*.dblite
+*.bin
+*.old
+*.orig
+*.uimg
+
+# Miscellaneous
+*~
+.DS_Store
+.config 3
+.config 4
+.config 5
+Midea-X1
+GPATH
+GRTAGS
+GTAGS
+JLinkLog.txt
+JLinkSettings.ini
+cconfig.h
+
+# Folders to ignore
+build/
+Debug/
+OBJ/
+documentation/html/
+packages/
+DebugConfig/
+RTE/
+settings/
+.vscode/
+Templates/
+Examples/
+output/
+out/
+tmp/
+
+*.clangd
+*.log
+*.cprj
+
+# Ignore all .map files except in the root directory
+/**/*.map
+
+# Special files to never ignore
+!.gitignore
+!*.uvprojx
+!*.h
+!*.c
+
+# Note: Adjust paths as necessary for your project structure
+*.code-workspace
