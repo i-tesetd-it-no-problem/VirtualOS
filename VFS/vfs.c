@@ -32,6 +32,11 @@
 
 extern int shell_write(uint8_t *buf, size_t len);
 
+static void new_line(void)
+{
+	shell_write((uint8_t *)"\r\n", 2);
+}
+
 struct virtual_fs {
 	struct fs_node *root;
 	struct fs_node *current_dir;
@@ -434,8 +439,10 @@ void vfs_init(void)
 /********************************tree********************************/
 static void tree(int argc, char *argv[])
 {
-	if (argc == 1)
+	if (argc == 1) {
 		show_fs_structure();
+		new_line();
+	}
 }
 SPS_EXPORT_CMD(tree, tree, "Show file system structure")
 /********************************tree********************************/
@@ -443,8 +450,10 @@ SPS_EXPORT_CMD(tree, tree, "Show file system structure")
 /********************************ls********************************/
 static void ls(int argc, char *argv[])
 {
-	if (argc == 1 && vfs_valid())
+	if (argc == 1 && vfs_valid()) {
 		print_current_directory(vfs.current_dir);
+		new_line();
+	}
 }
 SPS_EXPORT_CMD(ls, ls, "Show current directory contents")
 /********************************ls********************************/
@@ -487,6 +496,7 @@ static void cd(int argc, char *argv[])
 	offset++;
 
 	shell_write((uint8_t *)buffer, offset);
+	new_line();
 }
 
 SPS_EXPORT_CMD(cd, cd, "Change current directory")
@@ -535,6 +545,7 @@ SPS_EXPORT_CMD(cd, cd, "Change current directory")
 // 	offset++;
 
 // 	shell_write((uint8_t *)buffer, offset);
+//	new_line();
 // }
 
 // SPS_EXPORT_CMD(mkdir, mkdir, "Create a new directory")
@@ -574,6 +585,7 @@ SPS_EXPORT_CMD(cd, cd, "Change current directory")
 // 	offset++;
 
 // 	shell_write((uint8_t *)buffer, offset);
+//	new_line();
 // }
 
 // SPS_EXPORT_CMD(touch, touch, "Create a new file (cannot create directories recursively)") /* 不能递归创建,只能在当前目录下创建文件 */
@@ -675,6 +687,7 @@ SPS_EXPORT_CMD(cd, cd, "Change current directory")
 // 			shell_write((uint8_t *)buffer, offset);
 // 		}
 // 	}
+//	new_line();
 // }
 
 // SPS_EXPORT_CMD(rm, rm, "Remove a file or directory")
@@ -687,6 +700,7 @@ static void pwd(int argc, char *argv[])
 	get_current_path(path, sizeof(path));
 	shell_write((uint8_t *)path, strlen(path));
 	shell_write((uint8_t *)"\n", 1);
+	new_line();
 }
 SPS_EXPORT_CMD(pwd, pwd, "Show current directory path")
 /********************************pwd********************************/
