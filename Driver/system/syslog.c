@@ -161,7 +161,6 @@ static int syslog_write(drv_file_t *file, const uint8_t *buf, size_t len)
 
 static drv_err_e syslog_ioctrl(drv_file_t *file, int cmd, void *arg)
 {
-#if USE_TIME_STAMP
 	switch (cmd) {
 	case 0:
 		timestamp = *(uint32_t *)arg;
@@ -175,7 +174,6 @@ static drv_err_e syslog_ioctrl(drv_file_t *file, int cmd, void *arg)
 	}
 
 	return DRV_ERR_NONE;
-#endif
 }
 
 int shell_write(uint8_t *buf, size_t len)
@@ -228,14 +226,12 @@ void syslog_init(void)
 
 static void syslog_show(void)
 {
-#if USE_TIME_STAMP
 	pre_time += STIMER_PERIOD_PER_TICK_MS;
 
 	if (pre_time >= 1000) {
 		timestamp++;
 		pre_time = 0;
 	}
-#endif
 
 	if (is_queue_empty(&log_q))
 		return;
