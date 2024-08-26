@@ -45,8 +45,6 @@ static void free_log(void);
 
 #define USE_TIME_STAMP 0 /* 日志启用时显示时间,0为关闭,1为启用 开启会编译time.h头文件，将占用大量FLASH空间(约18K)*/
 
-#include "SEGGER_RTT.h"
-
 /* 请勿修改接口定义 */
 static void log_device_init(void)
 {
@@ -59,8 +57,7 @@ static void log_device_init(void)
 static int log_device_transmit(uint8_t *buf, size_t len)
 {
 	/* 完成发送接口,例如串口发送,SEGGER_RTT_Write等 */
-	SEGGER_RTT_Write(0, buf, len);
-	free_log();
+
 	return len; /* 返回发送成功的字节数 */
 }
 
@@ -69,7 +66,7 @@ static int log_device_recieve(uint8_t *buf, size_t len)
 {
 	/* 完成接收接口,例如串口接收,SEGGER_RTT_Read等 */
 
-	return SEGGER_RTT_Read(0, buf, len); /* 返回实际接收的字节长度 */
+	return 0; /* 返回实际接收的字节长度 */
 }
 
 //

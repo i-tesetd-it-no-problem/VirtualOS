@@ -38,35 +38,15 @@ stimer_timeout_process stimer_cb = NULL;
 // 2. 实现定时器的启动函数
 // 3. 实现定时器的中断处理函数,并在中断处理函数中调用f_timeout回调函数
 
-#if 0
+#if 1
 #error "你必须手动实现以下函数的具体内容,并在中断处理函数中调用f_timeout回调函数"
 #error "实现后请手动关闭这条错误警告"
 #endif
-
-#include "gd32l23x.h"
 
 /* 请勿修改接口定义 */
 static void _stimer_base_init(uint32_t period, stimer_timeout_process f_timeout)
 {
 	/*   实现定时器的初始化操作 period : 周期 , f_timeout : 中断回调函数  */
-
-	timer_parameter_struct task_timer;
-	rcu_periph_clock_enable(RCU_TIMER1);
-
-	timer_deinit(TIMER1);
-
-	//64M
-	//T=（period+1）*（prescaler+1）/TIMxCLK
-	task_timer.alignedmode = TIMER_COUNTER_EDGE;
-	task_timer.clockdivision = TIMER_CKDIV_DIV1;
-	task_timer.counterdirection = TIMER_COUNTER_UP;
-	task_timer.period = (period * 1000 - 1);
-	task_timer.prescaler = (64 - 1);
-	timer_init(TIMER1, &task_timer);
-
-	timer_flag_clear(TIMER1, TIMER_INT_UP);
-	timer_interrupt_enable(TIMER1, TIMER_INT_UP);
-	nvic_irq_enable(TIMER1_IRQn, 0);
 
 	stimer_cb = f_timeout;
 }
@@ -75,18 +55,8 @@ static void _stimer_base_init(uint32_t period, stimer_timeout_process f_timeout)
 static void _stimer_base_start(void)
 {
 	/*   实现定时器的启动操作 */
-
-	timer_enable(TIMER1);
 }
 
-void TIMER1_IRQHandler(void)
-{
-	if (timer_interrupt_flag_get(TIMER1, TIMER_INT_FLAG_UP) != RESET) {
-		if (stimer_cb)
-			stimer_cb();
-		timer_interrupt_flag_clear(TIMER1, TIMER_INT_FLAG_UP);
-	}
-}
 /* 实现平台中断处理函数,在中断处理函数中调用stimer_cb回调函数 */
 
 /******************************************************************************************

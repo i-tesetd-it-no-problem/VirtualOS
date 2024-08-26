@@ -140,3 +140,5 @@ static int log_device_recieve(uint8_t *buf, size_t len)
 ```
 
 ### 现已去除大部分默认命令,如需使用可在VFS/vfs.c文件底部取消注释相关代码或driver/system/internal_commands.c中的echo命令
+
+### 默认关闭日志时间显示
