@@ -75,6 +75,10 @@ static struct fs_node *create_fs_node(const char *name, enum fs_node_type type, 
 			return NULL;
 		}
 		node->file->opts = file_opts;
+		node->file->is_opened = false;
+		node->file->dev_size = 0;
+		node->file->seek_pos = 0;
+		node->file->private_data = NULL;
 	}
 
 	size_t name_len = strlen(name) + 1;
