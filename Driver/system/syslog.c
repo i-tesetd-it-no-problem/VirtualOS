@@ -1,7 +1,7 @@
 /**
  * @file syslog.c
  * @author wenshuyu (wsy2161826815@163.com)
- * @brief 一个简易Shell组件,实现了日志驱动以及Shell命令解析功能
+ * @brief 系统日志组件
  * @version 1.0
  * @date 2024-08-13
  * 
@@ -42,8 +42,9 @@ static void free_log(void);
 // 2. 初始化相关外设,log_device_init,若使用串口,强烈建议使用DMA发送减少CPU占用率,如使用类似JLink组件则可以不用初始化
 // 3. 实现log_device_transmit接口的具体内容
 // 4. 每当发送完成时调用free_log函数,例如使用DMA+串口时，在中断中调用
+// 5. 实现log_device_recieve接口的具体内容
 
-#define USE_TIME_STAMP 0 /* 日志启用时显示时间,0为关闭,1为启用 开启会编译time.h头文件，将占用大量FLASH空间(约18K)*/
+#define USE_TIME_STAMP 0 /* 日志信息中加入时间戳,0为关闭,1为启用 开启会编译time.h头文件，将占用大量FLASH空间(约18K)*/
 
 /* 请勿修改接口定义 */
 static void log_device_init(void)
@@ -56,7 +57,7 @@ static void log_device_init(void)
 /* 请勿修改接口定义 */
 static int log_device_transmit(uint8_t *buf, size_t len)
 {
-	/* 完成发送接口,例如串口发送,SEGGER_RTT_Write等 */
+	/* 完成发送接口,例如串口发送, SEGGER_RTT_Write 等 */
 
 	return len; /* 返回发送成功的字节数 */
 }
@@ -64,7 +65,7 @@ static int log_device_transmit(uint8_t *buf, size_t len)
 /* 请勿修改接口定义 */
 static int log_device_recieve(uint8_t *buf, size_t len)
 {
-	/* 完成接收接口,例如串口接收,SEGGER_RTT_Read等 */
+	/* 完成接收接口,例如串口接收, SEGGER_RTT_Read 等 */
 
 	return 0; /* 返回实际接收的字节长度 */
 }
@@ -102,7 +103,7 @@ typedef struct {
 } msg_t;
 
 msg_t *cur_log = NULL;
-volatile bool dma_transfer_complete = true;
+volatile bool transfer_complete = true;
 
 static uint8_t log_buf[128] = { 0 }; /* 32条日志 */
 static queue_info_t log_q;
@@ -204,11 +205,11 @@ static sp_shell_opts_t opts = {
 };
 
 static const char *start_msg = "\
-Welcome to VirtualOS!\n\
-This is a very lightweight shell component.\n\
-You can use `SPS_EXPORT_CMD` to export and add any commands you want\n\
-Use the command -- 'list' to view all available commands.\n\
-\n\n\n";
+Welcome to VirtualOS!\r\n\
+This is a very lightweight shell component.\r\n\
+You can use `SPS_EXPORT_CMD` to export and add any commands you want\r\n\
+Use the command -- 'list' to view all available commands.\r\n\
+\r\n\r\n";
 
 void syslog_init(void);
 void syslog_init(void)
@@ -236,10 +237,10 @@ static void syslog_show(void)
 	if (is_queue_empty(&log_q))
 		return;
 
-	if (!dma_transfer_complete)
+	if (!transfer_complete)
 		return;
 
-	dma_transfer_complete = false;
+	transfer_complete = false;
 
 	queue_get(&log_q, (uint8_t *)&cur_log, sizeof(msg_t *));
 
@@ -261,6 +262,6 @@ static void free_log(void)
 			free(cur_log->buf);
 		free(cur_log);
 		cur_log = NULL;
-		dma_transfer_complete = true;
+		transfer_complete = true;
 	}
 }
