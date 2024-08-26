@@ -34,10 +34,7 @@ bool init_tree_node(struct tree_node *node)
 	if (node == NULL)
 		return false;
 
-	node->parent = NULL;
-	node->first_child = NULL;
-	node->next_sibling = NULL;
-	node->last_child = NULL;
+	*node = (struct tree_node){ 0 };
 
 	return true;
 }
@@ -167,8 +164,8 @@ void traverse_tree_bfs(struct tree_node *root, visit_func visit)
 	if (queue == NULL)
 		return;
 
-	int front = 0;
-	int rear = 0;
+	uint16_t front = 0;
+	uint16_t rear = 0;
 
 	queue[rear++] = root;
 

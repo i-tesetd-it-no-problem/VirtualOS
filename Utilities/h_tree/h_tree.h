@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 struct tree_node {
 	struct tree_node *parent; // 父节点

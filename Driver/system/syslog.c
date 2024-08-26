@@ -43,7 +43,9 @@ static void free_log(void);
 // 3. 实现log_device_transmit接口的具体内容
 // 4. 每当发送完成时调用free_log函数,例如使用DMA+串口时，在中断中调用
 
-#define USE_TIME_STAMP 1 /* 日志启用时显示时间,0为关闭,1为启用 开启会编译time.h头文件，将占用大量FLASH空间 */
+#define USE_TIME_STAMP 0 /* 日志启用时显示时间,0为关闭,1为启用 开启会编译time.h头文件，将占用大量FLASH空间(约18K)*/
+
+#include "SEGGER_RTT.h"
 
 /* 请勿修改接口定义 */
 static void log_device_init(void)
@@ -57,7 +59,8 @@ static void log_device_init(void)
 static int log_device_transmit(uint8_t *buf, size_t len)
 {
 	/* 完成发送接口,例如串口发送,SEGGER_RTT_Write等 */
-
+	SEGGER_RTT_Write(0, buf, len);
+	free_log();
 	return len; /* 返回发送成功的字节数 */
 }
 
@@ -66,7 +69,7 @@ static int log_device_recieve(uint8_t *buf, size_t len)
 {
 	/* 完成接收接口,例如串口接收,SEGGER_RTT_Read等 */
 
-	return 0; /* 返回实际接收的字节长度 */
+	return SEGGER_RTT_Read(0, buf, len); /* 返回实际接收的字节长度 */
 }
 
 //
@@ -113,44 +116,46 @@ static uint32_t timestamp = 0;
 static int syslog_write(drv_file_t *file, const uint8_t *buf, size_t len)
 {
 #if USE_TIME_STAMP
-	char time_buffer[64] = "NO_TIME";
-
+	char time_buffer[64] = { 0 };
 	time_t raw_time = (time_t)timestamp;
 	struct tm *time_info = localtime(&raw_time);
 
-	if (time_info != NULL) {
-		strftime(time_buffer, sizeof(time_buffer), "[%Y-%m-%d %H:%M:%S]", time_info);
-	} else {
-		snprintf(time_buffer, sizeof(time_buffer), "[NO_TIME]");
-	}
+	strftime(time_buffer, sizeof(time_buffer), "[%Y-%m-%d %H:%M:%S]", time_info);
 
 	size_t new_len = len + strlen(time_buffer) + 2; // 时间戳 + 空格 + 日志内容
 	char *new_buf = (char *)malloc(new_len);
-	if (new_buf == NULL) {
+	if (new_buf == NULL)
 		return -1;
-	}
 
 	snprintf(new_buf, new_len, "%s %s", time_buffer, buf);
 #else
-	char *new_buf = (char *)malloc(len + 1);
-	if (new_buf == NULL) {
-		return -1;
-	}
-
-	memcpy(new_buf, buf, len);
-	new_buf[len] = '\0';
 	size_t new_len = len;
+	const char *new_buf = (const char *)buf;
 #endif
 
 	msg_t *new_msg = (msg_t *)malloc(sizeof(msg_t));
 	if (new_msg == NULL) {
+#if USE_TIME_STAMP
 		free(new_buf);
+#endif
 		return -1;
 	}
 
-	new_msg->buf = (uint8_t *)new_buf;
-	new_msg->len = new_len;
+	new_msg->buf = (uint8_t *)malloc(new_len);
+	if (new_msg->buf == NULL) {
+		free(new_msg);
+#if USE_TIME_STAMP
+		free(new_buf);
+#endif
+		return -1;
+	}
+
 	memcpy(new_msg->buf, new_buf, new_len);
+	new_msg->len = new_len;
+
+#if USE_TIME_STAMP
+	free(new_buf);
+#endif
 
 	queue_add(&log_q, (uint8_t *)&new_msg, sizeof(new_msg));
 
@@ -159,6 +164,7 @@ static int syslog_write(drv_file_t *file, const uint8_t *buf, size_t len)
 
 static drv_err_e syslog_ioctrl(drv_file_t *file, int cmd, void *arg)
 {
+#if USE_TIME_STAMP
 	switch (cmd) {
 	case 0:
 		timestamp = *(uint32_t *)arg;
@@ -172,6 +178,7 @@ static drv_err_e syslog_ioctrl(drv_file_t *file, int cmd, void *arg)
 	}
 
 	return DRV_ERR_NONE;
+#endif
 }
 
 int shell_write(uint8_t *buf, size_t len)

@@ -67,7 +67,6 @@ static struct fs_node *create_fs_node(const char *name, enum fs_node_type type, 
 	init_tree_node(&(node->tree));
 	node->node_type = type;
 	node->privalage = privalage;
-	node->file = NULL;
 
 	if (type == FS_FILE && file_opts) {
 		node->file = (drv_file_t *)malloc(sizeof(drv_file_t));
@@ -75,11 +74,7 @@ static struct fs_node *create_fs_node(const char *name, enum fs_node_type type, 
 			free(node);
 			return NULL;
 		}
-		node->file->dev_size = 0;
-		node->file->is_opened = false;
 		node->file->opts = file_opts;
-		node->file->private_data = NULL;
-		node->file->seek_pos = 0;
 	}
 
 	size_t name_len = strlen(name) + 1;
@@ -115,49 +110,6 @@ void destroy_fs_node(struct fs_node *node)
 		return;
 
 	destroy_tree_node(&(node->tree), destroy_fs_node_data);
-}
-
-/**
- * @brief 在目录下创建目录
- * 
- * @param dir 所在目录名
- * @param name 目录名
- * @param file_opts 操作指针
- * @param privalage 是否具有最高权限
- * @return true 
- * @return false 
- */
-static bool create_directory_in_dir(struct fs_node *dir, const char *name, drv_file_opts_t *file_opts, bool privalage)
-{
-	if (!dir || dir->node_type != FS_DIRECTORY || !name)
-		return false;
-
-	struct tree_node *child = dir->tree.first_child;
-	while (child) {
-		if (strcmp(((struct fs_node *)child)->name, name) == 0)
-			return false;
-		child = child->next_sibling;
-	}
-
-	struct fs_node *dir_node = create_fs_node(name, FS_DIRECTORY, file_opts, privalage);
-	if (!dir_node)
-		return false;
-
-	struct fs_node *dot_node = create_fs_node(".", FS_DIRECTORY, NULL, false);
-	struct fs_node *dotdot_node = create_fs_node("..", FS_DIRECTORY, NULL, false);
-
-	if (!dot_node || !dotdot_node) {
-		destroy_fs_node(dir_node);
-		free(dot_node);
-		free(dotdot_node);
-		return false;
-	}
-
-	add_tree_child(&(dir_node->tree), &(dot_node->tree));
-	add_tree_child(&(dir_node->tree), &(dotdot_node->tree));
-	add_tree_child(&(dir->tree), &(dir_node->tree));
-
-	return true;
 }
 
 /**
@@ -387,16 +339,17 @@ struct fs_node *get_node_by_path(const char *path)
 }
 
 /**
- * @brief 在目录下创建文件
+ * @brief 创建节点
  * 
- * @param dir 所在目录名
- * @param name 文件名
- * @param file_opts 操作指针
- * @param privalage 是否具有最高权限
+ * @param dir 父节点
+ * @param name 节点名
+ * @param file_opts 文件接口
+ * @param privalage 特权
+ * @param node_type 节点类型
  * @return true 
  * @return false 
  */
-bool create_file_in_dir(struct fs_node *dir, const char *name, drv_file_opts_t *file_opts, bool privalage)
+bool create_node_in_dir(struct fs_node *dir, const char *name, drv_file_opts_t *file_opts, bool privalage, enum fs_node_type node_type)
 {
 	if (!dir || dir->node_type != FS_DIRECTORY || !name)
 		return false;
@@ -410,11 +363,28 @@ bool create_file_in_dir(struct fs_node *dir, const char *name, drv_file_opts_t *
 		child = child->next_sibling;
 	}
 
-	struct fs_node *file_node = create_fs_node(name, FS_FILE, file_opts, privalage);
-	if (!file_node)
+	// 创建文件或目录节点
+	struct fs_node *node = create_fs_node(name, node_type, file_opts, privalage);
+	if (!node)
 		return false;
 
-	add_tree_child(&(dir->tree), &(file_node->tree));
+	// 如果创建的是目录，则添加 "." 和 ".."
+	if (node_type == FS_DIRECTORY) {
+		struct fs_node *dot_node = create_fs_node(".", FS_DIRECTORY, NULL, false);
+		struct fs_node *dotdot_node = create_fs_node("..", FS_DIRECTORY, NULL, false);
+
+		if (!dot_node || !dotdot_node) {
+			destroy_fs_node(node);
+			free(dot_node);
+			free(dotdot_node);
+			return false;
+		}
+
+		add_tree_child(&(node->tree), &(dot_node->tree));
+		add_tree_child(&(node->tree), &(dotdot_node->tree));
+	}
+
+	add_tree_child(&(dir->tree), &(node->tree));
 	return true;
 }
 
@@ -428,8 +398,8 @@ void vfs_init(void)
 	vfs.root = create_fs_node("/", FS_DIRECTORY, NULL, true);
 	vfs.current_dir = vfs.root;
 
-	create_directory_in_dir(vfs.root, "dev", NULL, true); /* 禁止删除 */
-	create_directory_in_dir(vfs.root, "sys", NULL, true); /* 禁止删除 */
+	create_node_in_dir(vfs.root, "dev", NULL, true, FS_DIRECTORY); /* 禁止删除 */
+	create_node_in_dir(vfs.root, "sys", NULL, true, FS_DIRECTORY); /* 禁止删除 */
 }
 
 // /***************************************************************************************************/
@@ -448,58 +418,58 @@ SPS_EXPORT_CMD(tree, tree, "Show file system structure")
 /********************************tree********************************/
 
 /********************************ls********************************/
-static void ls(int argc, char *argv[])
-{
-	if (argc == 1 && vfs_valid()) {
-		print_current_directory(vfs.current_dir);
-		new_line();
-	}
-}
-SPS_EXPORT_CMD(ls, ls, "Show current directory contents")
+// static void ls(int argc, char *argv[])
+// {
+// 	if (argc == 1 && vfs_valid()) {
+// 		print_current_directory(vfs.current_dir);
+// 		new_line();
+// 	}
+// }
+// SPS_EXPORT_CMD(ls, ls, "Show current directory contents")
 /********************************ls********************************/
 
 /********************************cd********************************/
-static void cd(int argc, char *argv[])
-{
-	char path[256] = { 0 };
+// static void cd(int argc, char *argv[])
+// {
+// 	char path[256] = { 0 };
 
-	if (argc == 1) {
-		strcpy(path, "/");
-	} else if (argc == 2) {
-		strcpy(path, argv[1]);
-	} else {
-		strcpy(path, argv[1]);
-		strcat(path, "/");
-		strcat(path, argv[2]);
-	}
+// 	if (argc == 1) {
+// 		strcpy(path, "/");
+// 	} else if (argc == 2) {
+// 		strcpy(path, argv[1]);
+// 	} else {
+// 		strcpy(path, argv[1]);
+// 		strcat(path, "/");
+// 		strcat(path, argv[2]);
+// 	}
 
-	char buffer[256];
-	size_t offset = 0;
+// 	char buffer[256];
+// 	size_t offset = 0;
 
-	if (change_directory(path)) {
-		const char *msg = "Directory changed to ";
-		size_t msg_len = strlen(msg);
-		memcpy(buffer + offset, msg, msg_len);
-		offset += msg_len;
-	} else {
-		const char *msg = "Directory not found: ";
-		size_t msg_len = strlen(msg);
-		memcpy(buffer + offset, msg, msg_len);
-		offset += msg_len;
-	}
+// 	if (change_directory(path)) {
+// 		const char *msg = "Directory changed to ";
+// 		size_t msg_len = strlen(msg);
+// 		memcpy(buffer + offset, msg, msg_len);
+// 		offset += msg_len;
+// 	} else {
+// 		const char *msg = "Directory not found: ";
+// 		size_t msg_len = strlen(msg);
+// 		memcpy(buffer + offset, msg, msg_len);
+// 		offset += msg_len;
+// 	}
 
-	size_t path_len = strlen(path);
-	memcpy(buffer + offset, path, path_len);
-	offset += path_len;
+// 	size_t path_len = strlen(path);
+// 	memcpy(buffer + offset, path, path_len);
+// 	offset += path_len;
 
-	buffer[offset] = '\n';
-	offset++;
+// 	buffer[offset] = '\n';
+// 	offset++;
 
-	shell_write((uint8_t *)buffer, offset);
-	new_line();
-}
+// 	shell_write((uint8_t *)buffer, offset);
+// 	new_line();
+// }
 
-SPS_EXPORT_CMD(cd, cd, "Change current directory")
+// SPS_EXPORT_CMD(cd, cd, "Change current directory")
 /********************************cd********************************/
 
 /********************************mkdir********************************/
@@ -525,7 +495,7 @@ SPS_EXPORT_CMD(cd, cd, "Change current directory")
 // 	char buffer[256];
 // 	size_t offset = 0;
 
-// 	if (create_directory_in_dir(vfs.current_dir, path, NULL, false)) {
+// 	if (create_node_in_dir(vfs.current_dir, path, NULL, false, FS_DIRECTORY)) {
 // 		const char *msg = "Directory created: ";
 // 		size_t msg_len = strlen(msg);
 // 		memcpy(buffer + offset, msg, msg_len);
@@ -694,13 +664,12 @@ SPS_EXPORT_CMD(cd, cd, "Change current directory")
 /********************************rm********************************/
 
 /********************************pwd********************************/
-static void pwd(int argc, char *argv[])
-{
-	char path[256] = { 0 };
-	get_current_path(path, sizeof(path));
-	shell_write((uint8_t *)path, strlen(path));
-	shell_write((uint8_t *)"\n", 1);
-	new_line();
-}
-SPS_EXPORT_CMD(pwd, pwd, "Show current directory path")
+// static void pwd(int argc, char *argv[])
+// {
+// 	char path[256] = { 0 };
+// 	get_current_path(path, sizeof(path));
+// 	shell_write((uint8_t *)path, strlen(path));
+// 	new_line();
+// }
+// SPS_EXPORT_CMD(pwd, pwd, "Show current directory path")
 /********************************pwd********************************/
