@@ -57,7 +57,7 @@ struct timer {
 };
 
 static stimer_task_t defer_pool[MAX_DEFER_TASK];
-static struct timer m_timer;
+static struct timer m_timer = { 0 };
 
 static inline int is_timer_run(void)
 {
@@ -189,9 +189,6 @@ bool stimer_init(struct timer_port *port)
 	if (!port || !port->f_init || !port->f_start)
 		return false;
 
-	m_timer.cur_tick = 0;
-	m_timer.pre_tick = 0;
-	m_timer.run_flag = 0;
 	list_init(&(m_timer.long_tick_list));
 	list_init(&(m_timer.defer_task_list));
 
@@ -210,7 +207,6 @@ bool stimer_task_create(stimer_f init_f, stimer_f task_f, uint32_t period_ms)
 {
 	stimer_task_t *task = (stimer_task_t *)malloc(sizeof(stimer_task_t));
 	if (task) {
-		task->arrive = 0;
 		task->init_f = init_f;
 		task->period = Period_to_Tick(period_ms);
 		task->reserved = 1;

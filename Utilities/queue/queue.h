@@ -2,161 +2,161 @@
  * @file queue.h
  * @author wenshuyu (wsy2161826815@163.com)
  * @brief 循环队列组件
- * @version 1.0
- * @date 2024-08-12
- * 
- * The MIT License (MIT)
- * 
+ * @version 0.1
+ * @date 2024-12-19
+ *
+ * @copyright Copyright (c) 2024
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
  */
 
-#ifndef _VIRTUAL_OS_QUEUE_H
-#define _VIRTUAL_OS_QUEUE_H
+#ifndef _QUEUE_H
+#define _QUEUE_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
-#include <string.h>
 
-/* 定义辅助宏 */
-#define POWER_OF_TWO(x) ((x) && !((x) & ((x)-1))) /* 判断 x 是否为 2 的幂 */
-#define Q_MIN(a, b) (((a) <= (b)) ? (a) : (b)) /* 取 a 和 b 的最小值 */
+/**
+ * @brief 锁和解锁回调函数的函数指针类型
+ */
+typedef void (*lock_callback_t)(void);
+typedef void (*unlock_callback_t)(void);
 
-typedef size_t q_size;
-
-/* 环形队列信息结构体 */
-typedef struct {
-	uint8_t *buf; /* 缓冲区 */
-	q_size unit_bytes; /* 单元大小 */
-	q_size buf_size; /* 缓冲区大小 */
-	volatile q_size rd; /* 读索引 */
-	volatile q_size wr; /* 写索引 */
-} queue_info_t;
+/**
+ * @brief 循环队列结构体
+ */
+struct queue_info {
+    uint8_t *buf;             /* 缓冲区 */
+    size_t unit_bytes;        /* 单元大小(字节数) */
+    size_t buf_size;          /* 缓冲区容量(单位数) */
+    size_t rd;                /* 读索引 */
+    size_t wr;                /* 写索引 */
+    lock_callback_t lock;     /* 锁回调函数, 可选 */
+    unlock_callback_t unlock; /* 解锁回调函数, 可选 */
+};
 
 /**
  * @brief 初始化队列
- * 
- * @param q 队列实例
- * @param unit_bytes 单元字节数
- * @param buf 缓冲区
- * @param count 缓冲区大小
- * @return
+ *
+ * @param q          指向队列实例的指针(由用户分配内存)
+ * @param unit_bytes 每个单元的字节数
+ * @param buf        指向预分配缓冲区的指针
+ * @param count      缓冲区容量(单位数)
+ * @param lock       锁回调函数指针, 可为 NULL
+ * @param unlock     解锁回调函数指针, 可为 NULL
+ * @return true 成功,false 失败
  */
-bool queue_init(queue_info_t *q, q_size unit_bytes, uint8_t *buf, q_size count);
+bool queue_init(struct queue_info *q, size_t unit_bytes, uint8_t *buf,
+                size_t count, lock_callback_t lock, unlock_callback_t unlock);
 
 /**
- * @brief 重置队列
- * 
- * @param q 队列实例
+ * @brief 销毁队列并释放资源
+ *
+ * @param q 指向队列实例的指针
  */
-void queue_reset(queue_info_t *q);
+void queue_destroy(struct queue_info *q);
 
 /**
- * @brief 从添加操作中安全地重置队列
- * 
- * @param q 队列实例
+ * @brief 重置清空队列
+ *
+ * @param q 指向队列实例的指针
  */
-void queue_reset_safe_from_add(queue_info_t *q);
-
-/**
- * @brief 从获取操作中安全地重置队列
- * 
- * @param q 队列实例
- */
-void queue_reset_safe_from_get(queue_info_t *q);
-
-/**
- * @brief 获取队列中已使用的空间
- * 
- * @param q 队列实例
- * @return q_size 已使用的空间
- */
-q_size queue_used(const queue_info_t *q);
-
-/**
- * @brief 获取队列中剩余的空间
- * 
- * @param q 队列实例
- * @return q_size 剩余的空间
- */
-q_size queue_remain_space(const queue_info_t *q);
-
-/**
- * @brief 判断队列是否为空
- * 
- * @param q 队列实例
- * @return 
- */
-bool is_queue_empty(const queue_info_t *q);
-
-/**
- * @brief 判断队列是否已满
- * 
- * @param q 队列实例
- * @return 
- */
-bool is_queue_full(const queue_info_t *q);
+void queue_reset(struct queue_info *q);
 
 /**
  * @brief 向队列中添加数据
- * 
- * @param q 队列实例
- * @param data 数据
- * @param units 数据单元数
- * @return 
+ *
+ * @param q     指向队列实例的指针
+ * @param data  指向要添加的数据的指针
+ * @param units 要添加的单元数
+ * @return size_t 成功添加的单元数
  */
-q_size queue_add(queue_info_t *q, const uint8_t *data, q_size units);
+size_t queue_add(struct queue_info *q, const uint8_t *data, size_t units);
 
 /**
  * @brief 从队列中获取数据
- * 
- * @param q 队列实例
- * @param data 存储数据的缓冲区
- * @param units 数据单元数
- * @return 
+ *
+ * @param q     指向队列实例的指针
+ * @param data  指向存储获取数据的缓冲区的指针
+ * @param units 要获取的单元数
+ * @return size_t 成功获取的单元数
  */
-q_size queue_get(queue_info_t *q, uint8_t *data, q_size units);
+size_t queue_get(struct queue_info *q, uint8_t *data, size_t units);
 
 /**
- * @brief 查看队列中的数据，但不移除
- * 
- * @param q 队列实例
- * @param data 存储数据的缓冲区
- * @param units 数据单元数
- * @return 
+ * @brief 查看队列中的数据,但不移除
+ *
+ * @param q     指向队列实例的指针
+ * @param data  指向存储查看数据的缓冲区的指针
+ * @param units 要查看的单元数
+ * @return size_t 成功查看的单元数
  */
-q_size queue_peek(const queue_info_t *q, uint8_t *data, q_size units);
+size_t queue_peek(const struct queue_info *q, uint8_t *data, size_t units);
 
 /**
- * @brief 增加读索引
- * 
- * @param q 队列实例
- * @param units 
+ * @brief 判断队列是否为空
+ *
+ * @param q 指向队列实例的指针
+ * @return true 如果队列为空,false 否则
  */
-void queue_advance_rd(queue_info_t *q, q_size units);
+bool is_queue_empty(const struct queue_info *q);
 
 /**
- * @brief 增加写索引
- * 
- * @param q 队列实例
- * @param units 
+ * @brief 判断队列是否已满
+ *
+ * @param q 指向队列实例的指针
+ * @return true 如果队列已满,false 否则
  */
-void queue_advance_wr(queue_info_t *q, q_size units);
+bool is_queue_full(const struct queue_info *q);
 
-#endif /* _VIRTUAL_OS_QUEUE_H */
+/**
+ * @brief 获取队列中已使用的单元数
+ *
+ * @param q 指向队列实例的指针
+ * @return size_t 已使用的单元数
+ */
+size_t queue_used(const struct queue_info *q);
+
+/**
+ * @brief 获取队列中剩余的可用单元数
+ *
+ * @param q 指向队列实例的指针
+ * @return size_t 剩余的单元数
+ */
+size_t queue_remain_space(const struct queue_info *q);
+
+/**
+ * @brief 进阶读取索引
+ *
+ * @param q     指向队列实例的指针
+ * @param units 要前进的单元数
+ */
+void queue_advance_rd(struct queue_info *q, size_t units);
+
+/**
+ * @brief 进阶写入索引
+ *
+ * @param q     指向队列实例的指针
+ * @param units 要前进的单元数
+ */
+void queue_advance_wr(struct queue_info *q, size_t units);
+
+#endif /* _QUEUE_H */

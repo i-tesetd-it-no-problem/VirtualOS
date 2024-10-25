@@ -34,7 +34,7 @@ bool device_register(drv_file_opts_t *file_opts, const char *name)
 {
 	struct fs_node *dev_node = get_node_by_path("/dev");
 	if (dev_node)
-		return create_file_in_dir(dev_node, name, file_opts, true);
+		return create_node_in_dir(dev_node, name, file_opts, true, FS_FILE);
 
 	return false;
 }

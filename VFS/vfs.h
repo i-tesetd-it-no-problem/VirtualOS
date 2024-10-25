@@ -59,14 +59,15 @@ struct fs_node {
 struct fs_node *get_node_by_path(const char *path);
 
 /**
- * @brief 在目录下创建文件
+ * @brief 创建节点
  * 
- * @param dir 所在目录名
- * @param name 文件名
- * @param file_opts 操作指针
- * @param privalage 是否具有最高权限
+ * @param dir 父节点
+ * @param name 节点名
+ * @param file_opts 文件接口
+ * @param privalage 特权
+ * @param node_type 节点类型
  * @return true 
  * @return false 
  */
-bool create_file_in_dir(struct fs_node *dir, const char *name, drv_file_opts_t *file_opts, bool privalage);
+bool create_node_in_dir(struct fs_node *dir, const char *name, drv_file_opts_t *file_opts, bool privalage, enum fs_node_type node_type);
 #endif /* _VIRTUAL_OS_VFS_H_ */

@@ -1,7 +1,7 @@
 /**
  * @file syslog.c
  * @author wenshuyu (wsy2161826815@163.com)
- * @brief 一个简易Shell组件,实现了日志驱动以及Shell命令解析功能
+ * @brief 系统日志组件
  * @version 1.0
  * @date 2024-08-13
  * 
@@ -27,6 +27,7 @@
  * 
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -42,8 +43,14 @@ static void free_log(void);
 // 2. 初始化相关外设,log_device_init,若使用串口,强烈建议使用DMA发送减少CPU占用率,如使用类似JLink组件则可以不用初始化
 // 3. 实现log_device_transmit接口的具体内容
 // 4. 每当发送完成时调用free_log函数,例如使用DMA+串口时，在中断中调用
+// 5. 实现log_device_recieve接口的具体内容
 
 #define USE_TIME_STAMP 1 /* 日志启用时显示时间,0为关闭,1为启用 开启会编译time.h头文件，将占用大量FLASH空间 */
+#define MAX_LOG_LENGTH 256  /* 每条日志的最大长度 不建议修改 */
+
+#if (MAX_LOG_LENGTH & (MAX_LOG_LENGTH -1)) != 0
+#error "MAX_LOG_LENGTH must be a power of 2"
+#endif
 
 /* 请勿修改接口定义 */
 static void log_device_init(void)
@@ -56,7 +63,7 @@ static void log_device_init(void)
 /* 请勿修改接口定义 */
 static int log_device_transmit(uint8_t *buf, size_t len)
 {
-	/* 完成发送接口,例如串口发送,SEGGER_RTT_Write等 */
+	/* 完成发送接口,例如串口发送, SEGGER_RTT_Write 等 */
 
 	return len; /* 返回发送成功的字节数 */
 }
@@ -64,20 +71,13 @@ static int log_device_transmit(uint8_t *buf, size_t len)
 /* 请勿修改接口定义 */
 static int log_device_recieve(uint8_t *buf, size_t len)
 {
-	/* 完成接收接口,例如串口接收,SEGGER_RTT_Read等 */
+	/* 完成接收接口,例如串口接收, SEGGER_RTT_Read 等 */
 
 	return 0; /* 返回实际接收的字节长度 */
 }
 
-//
-//
-//
-//
-//
-//
-//
 /******************************************************************************************
- *                                      以下部分用户无需修改                            	*
+ *                                      以下部分用户无需修改                               *
  ******************************************************************************************/
 
 #if USE_TIME_STAMP
@@ -86,26 +86,23 @@ static int log_device_recieve(uint8_t *buf, size_t len)
 
 #include "simple_shell.h"
 
+#define LOG_FRAME_SIZE_OCCUPY (2) /* 两个字节存储长度 */
+#define TOTAL_FRAME_COUNT (1 << 3) // 一定要是2的幂
+#define LOG_BUFFER_SIZE (MAX_LOG_LENGTH * TOTAL_FRAME_COUNT) /* 日志缓冲区总大小 2K */
+
+static struct queue_info log_queue; /* 日志队列 */
+static uint8_t log_buffer[LOG_BUFFER_SIZE]; /* 日志缓冲区 */
 static const char syslog_name[] = "syslog";
 static int syslog_write(drv_file_t *file, const uint8_t *buf, size_t len);
 static drv_err_e syslog_ioctrl(drv_file_t *file, int cmd, void *arg);
 static void log_device_init(void);
 
 static drv_file_opts_t syslog_dev = {
-	.write = syslog_write,
-	.ioctrl = syslog_ioctrl,
+    .write = syslog_write,
+    .ioctrl = syslog_ioctrl,
 };
 
-typedef struct {
-	size_t len;
-	uint8_t *buf;
-} msg_t;
-
-msg_t *cur_log = NULL;
 volatile bool dma_transfer_complete = true;
-
-static uint8_t log_buf[128] = { 0 }; /* 32条日志 */
-static queue_info_t log_q;
 
 static uint32_t pre_time = 0;
 static uint32_t timestamp = 0;
@@ -113,154 +110,150 @@ static uint32_t timestamp = 0;
 static int syslog_write(drv_file_t *file, const uint8_t *buf, size_t len)
 {
 #if USE_TIME_STAMP
-	char time_buffer[64] = "NO_TIME";
+    char time_buffer[64] = "NO_TIME";
 
-	time_t raw_time = (time_t)timestamp;
-	struct tm *time_info = localtime(&raw_time);
+    time_t raw_time = (time_t)timestamp;
+    struct tm *time_info = localtime(&raw_time);
 
-	if (time_info != NULL) {
-		strftime(time_buffer, sizeof(time_buffer), "[%Y-%m-%d %H:%M:%S]", time_info);
-	} else {
-		snprintf(time_buffer, sizeof(time_buffer), "[NO_TIME]");
-	}
+    if (time_info != NULL) {
+        strftime(time_buffer, sizeof(time_buffer), "[%Y-%m-%d %H:%M:%S]", time_info);
+    } else {
+        snprintf(time_buffer, sizeof(time_buffer), "[NO_TIME]");
+    }
 
-	size_t new_len = len + strlen(time_buffer) + 2; // 时间戳 + 空格 + 日志内容
-	char *new_buf = (char *)malloc(new_len);
-	if (new_buf == NULL) {
-		return -1;
-	}
+    char new_buf[MAX_LOG_LENGTH];
+    size_t new_len = snprintf(new_buf, sizeof(new_buf), "%s %.*s", time_buffer, (int)len, buf);
 
-	snprintf(new_buf, new_len, "%s %s", time_buffer, buf);
+    if (new_len >= MAX_LOG_LENGTH) {
+        // 如果日志长度超过最大长度，截断
+        new_len = MAX_LOG_LENGTH - 1;
+        new_buf[new_len] = '\0';
+    }
 #else
-	char *new_buf = (char *)malloc(len + 1);
-	if (new_buf == NULL) {
-		return -1;
-	}
-
-	memcpy(new_buf, buf, len);
-	new_buf[len] = '\0';
-	size_t new_len = len;
+    const char *new_buf = (const char *)buf;
+    size_t new_len = len;
+    if (new_len >= MAX_LOG_LENGTH) {
+        // 如果日志长度超过最大长度，截断
+        new_len = MAX_LOG_LENGTH - 1;
+    }
 #endif
 
-	msg_t *new_msg = (msg_t *)malloc(sizeof(msg_t));
-	if (new_msg == NULL) {
-		free(new_buf);
-		return -1;
-	}
+    uint16_t total_len = (uint16_t)(new_len + LOG_FRAME_SIZE_OCCUPY);  // 2 字节用于存储长度信息
 
-	new_msg->buf = (uint8_t *)new_buf;
-	new_msg->len = new_len;
-	memcpy(new_msg->buf, new_buf, new_len);
+    if (queue_remain_space(&log_queue) < total_len) {
+        // 队列空间不足，覆盖旧日志
+        queue_advance_rd(&log_queue, total_len);
+    }
 
-	queue_add(&log_q, (uint8_t *)&new_msg, sizeof(new_msg));
+    // 将长度信息写入队列（高字节在前）
+    uint8_t len_high = (uint8_t)((new_len >> 8) & 0xFF);
+    uint8_t len_low = (uint8_t)(new_len & 0xFF);
 
-	return new_len;
+    uint8_t length_bytes[LOG_FRAME_SIZE_OCCUPY] = {len_high, len_low};
+
+    queue_add(&log_queue, length_bytes, LOG_FRAME_SIZE_OCCUPY);  // 写入长度信息
+
+    queue_add(&log_queue, (uint8_t *)new_buf, new_len);  // 写入日志内容
+
+    return new_len;
 }
 
 static drv_err_e syslog_ioctrl(drv_file_t *file, int cmd, void *arg)
 {
-	switch (cmd) {
-	case 0:
-		timestamp = *(uint32_t *)arg;
+    switch (cmd) {
+    case 0:
+        timestamp = *(uint32_t *)arg;
+        break;
+    case 1:
+        *(uint32_t *)arg = timestamp;
+        break;
+    default:
+        break;
+    }
 
-		break;
-	case 1:
-		*(uint32_t *)arg = timestamp;
-		break;
-	default:
-		break;
-	}
-
-	return DRV_ERR_NONE;
+    return DRV_ERR_NONE;
 }
 
 int shell_write(uint8_t *buf, size_t len)
 {
-	char *new_buf = (char *)malloc(len);
-	if (!new_buf)
-		return -1;
-
-	memcpy(new_buf, buf, len);
-
-	msg_t *new_msg = (msg_t *)malloc(sizeof(msg_t));
-	if (!new_msg) {
-		free(new_buf);
-		return -1;
-	}
-
-	new_msg->buf = (uint8_t *)new_buf;
-	new_msg->len = len;
-
-	queue_add(&log_q, (uint8_t *)&new_msg, sizeof(new_msg));
-
-	return len;
+    return syslog_write(NULL, buf, len);
 }
 
 static sp_shell_opts_t opts = {
-	.read = log_device_recieve,
-	.write = shell_write,
+    .read = log_device_recieve,
+    .write = shell_write,
 };
 
 static const char *start_msg = "\
-Welcome to VirtualOS!\n\
-This is a very lightweight shell component.\n\
-You can use `SPS_EXPORT_CMD` to export and add any commands you want\n\
-Use the command -- 'list' to view all available commands.\n\
-\n\n\n";
+Welcome to VirtualOS!\r\n\
+This is a very lightweight shell component.\r\n\
+You can use `SPS_EXPORT_CMD` to export and add any commands you want\r\n\
+Use the command -- 'list' to view all available commands.\r\n\
+\r\n\r\n";
 
 void syslog_init(void);
 void syslog_init(void)
 {
-	log_device_init();
+    log_device_init();
 
-	queue_init(&log_q, 1, log_buf, sizeof(log_buf));
+    queue_init(&log_queue, 1, log_buffer, LOG_BUFFER_SIZE, NULL, NULL);
 
-	simple_shell_init(&opts);
+    simple_shell_init(&opts);
 
-	device_register(&syslog_dev, syslog_name);
+    device_register(&syslog_dev, syslog_name);
 
-	log_device_transmit((uint8_t *)start_msg, strlen(start_msg));
+    syslog_write(NULL, (uint8_t *)start_msg, strlen(start_msg));
 }
 
 static void syslog_show(void)
 {
 #if USE_TIME_STAMP
-	pre_time += STIMER_PERIOD_PER_TICK_MS;
+    pre_time += STIMER_PERIOD_PER_TICK_MS;
 
-	if (pre_time >= 1000) {
-		timestamp++;
-		pre_time = 0;
-	}
+    if (pre_time >= 1000) {
+        timestamp++;
+        pre_time = 0;
+    }
 #endif
 
-	if (is_queue_empty(&log_q))
-		return;
+    if (is_queue_empty(&log_queue) || !dma_transfer_complete)
+        return;
 
-	if (!dma_transfer_complete)
-		return;
+    dma_transfer_complete = false;
 
-	dma_transfer_complete = false;
+    // 日志长度信息
+    uint8_t length_bytes[LOG_FRAME_SIZE_OCCUPY];
+    if (queue_get(&log_queue, length_bytes, LOG_FRAME_SIZE_OCCUPY) != LOG_FRAME_SIZE_OCCUPY) {
+        dma_transfer_complete = true;
+        return;
+    }
 
-	queue_get(&log_q, (uint8_t *)&cur_log, sizeof(msg_t *));
+    uint16_t log_len = (length_bytes[0] << 8) | length_bytes[1];
 
-	log_device_transmit(cur_log->buf, cur_log->len);
+    if (log_len == 0 || log_len > MAX_LOG_LENGTH) {
+        dma_transfer_complete = true;
+        return;
+    }
+
+    // 取出日志
+	uint8_t tmp_buf[MAX_LOG_LENGTH];
+    if (queue_get(&log_queue, tmp_buf, log_len) != log_len) {
+        dma_transfer_complete = true;
+        return;
+    }
+
+    // 发送日志
+    log_device_transmit(tmp_buf, log_len);
 }
 
-void syslog_task(void);
 void syslog_task(void)
 {
-	syslog_show();
+    syslog_show();
 
-	shell_dispatch();
+    shell_dispatch();
 }
 
 static void free_log(void)
 {
-	if (cur_log) {
-		if (cur_log->buf)
-			free(cur_log->buf);
-		free(cur_log);
-		cur_log = NULL;
-		dma_transfer_complete = true;
-	}
+    dma_transfer_complete = true;
 }

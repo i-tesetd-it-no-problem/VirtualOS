@@ -17,6 +17,33 @@
 
  - GD32官方提供的链接文件需要修改顶部部分为自己芯片型号的FLASH与RAM大小,如图所示:
  - ![alt text](image-2.png)
+ - 然后需要改几个小地方，官方链接文件存在一点问题，添加如下几行
+ ```assembly
+ MEMORY
+ {
+   FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 1024K
+   RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 96K
+ }
+ 
+ _sp = ORIGIN(RAM) + LENGTH(RAM); /* 栈起始地址 _sp变量定义在启动文件中有使用 */
+ ```
+ - 去掉最下面栈的定义, 添加堆的定义
+ ```assembly
+ . = ALIGN(8);
+  PROVIDE ( end = _ebss );
+  PROVIDE ( _end = _ebss );
+
+  // .stack ORIGIN(RAM) + LENGTH(RAM) - __stack_size :
+  // {
+  //   PROVIDE( _heap_end = . ); 
+  //   . = __stack_size;  
+  //   PROVIDE( _sp = . ); 
+  // } >RAM AT>RAM
+
+  // _end和_heap_end变量在官方固件库中的syscall.c文件中所使用
+  PROVIDE ( _end = __bss_end__ );
+  PROVIDE ( _heap_end = _sp - __stack_size );
+ ```
 
 ## 4. 提供一个定时器用于系统调度
 ### 实现Driver/system/platform_schedule.c中的三个接口

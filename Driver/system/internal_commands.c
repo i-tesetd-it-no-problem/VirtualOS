@@ -103,6 +103,6 @@ static void echo_cmd(int argc, char *argv[])
 	}
 }
 
-SPS_EXPORT_CMD(echo, echo_cmd, "Echo a value to a device or file. Usage: echo [value] > [device] Example: echo 1 > /dev/led")
+// SPS_EXPORT_CMD(echo, echo_cmd, "Echo a value to a device or file. Usage: echo [value] > [device] Example: echo 1 > /dev/led")
 
 /****************************************************向设备写入数据****************************************************/

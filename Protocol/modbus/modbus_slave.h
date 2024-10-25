@@ -1,78 +1,92 @@
 /**
  * @file modbus_slave.h
  * @author wenshuyu (wsy2161826815@163.com)
- * @brief ModBus协议从机组件
- * @version 1.0
- * @date 2024-08-12
- * 
- * The MIT License (MIT)
- * 
+ * @brief modbus从机协议
+ * @version 0.1
+ * @date 2024-12-17
+ *
+ * @copyright Copyright (c) 2024
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
  */
 
-#ifndef _VIRTUAL_OS_MODBUS_SLAVE_H
-#define _VIRTUAL_OS_MODBUS_SLAVE_H
+#ifndef _MODBUS_SLAVE_H
+#define _MODBUS_SLAVE_H
 
-#include "crc.h"
 #include "modbus.h"
-#include "queue.h"
 
-typedef enum {
-	MODBUS_SLAVE_HANDLE_ERR, //回复错误帧
-	MODBUS_SLAVE_HANDLE_SUCCESS, //正常回复
-	MODBUS_SLAVE_HANDLE_NOT_REPLY, //不回复
-} modbus_slave_handle_e;
-
-/**
- * @brief ModBus从机处理回调函数
- * 
- */
-typedef modbus_slave_handle_e (*modbus_slave_handler)(uint16_t addr, uint8_t func, uint16_t reg, uint16_t reg_num, uint16_t *p_in_out);
-
-typedef struct {
-	uint16_t start; /* 起始地址 */
-	uint16_t end; /* 结束地址 */
-	modbus_slave_handler handle; /* 处理函数 */
-} modbus_slave_handler_t;
+// 响应码
+#define MODBUS_RESP_SUCCESS 0x00	// 响应成功
+#define MODBUS_RESP_NOT_REPLY 0x01	// 不回复
+#define MODBUS_RESP_ERR_FUNC 0x02	// 功能码错误
+#define MODBUS_RESP_ERR_REG 0x03	// 寄存器地址错误
+#define MODBUS_RESP_ERR_REGNUM 0x04 // 寄存器数量错误
+#define MODBUS_RESP_ERR_OTHER 0x05	// 其他错误
 
 /**
- * @brief 初始化ModBus从机
- * 
- * @param p_serial_opt 串口配置
- * @param f_validator 地址校验函数
- * @return int 初始化结果，0表示成功，其他表示失败
+ * @brief 从机接收帧处理
+ *
+ * @param func 功能码
+ * @param reg 寄存器地址
+ * @param reg_num 寄存器数量
+ * @param p_in_out 输入输出缓冲
+ *
+ * @return uint8_t 参考响应码
  */
-int modbus_slave_init(modbus_serial_opt_t *p_serial_opt, rtu_address_validator f_validator);
+typedef uint8_t (*mb_slv_frame_resp)(
+	uint8_t func, uint16_t reg, uint16_t reg_num, uint16_t *p_in_out);
+
+// 寄存器区间任务处理
+struct mb_slv_work {
+	uint16_t start; // 起始寄存器
+	uint16_t end; // 结束寄存器, 处理时不包括end, 应该设为实际的结束寄存器+1
+	mb_slv_frame_resp resp; // 响应处理函数
+};
+
+// 从机句柄
+typedef struct mb_slv *mb_slv_handle;
 
 /**
- * @brief 设置ModBus从机的处理表
- * 
- * @param p_handler_table 处理表
- * @param num 处理表长度
+ * @brief 从机初始化并申请句柄
+ *
+ * @param opts 				读写等回调函数指针
+ * @param slv_addr 			从机地址
+ * @param table 			任务处理表
+ * @param table_num 		任务处理表数量
+ * @return mb_slv_handle 	成功返回句柄，失败返回NULL
  */
-void modbus_slave_set_table(modbus_slave_handler_t *p_handler_table, uint16_t num);
+mb_slv_handle mb_slv_init(
+	struct serial_opts *opts, uint8_t slv_addr, struct mb_slv_work *work_table, uint16_t table_num);
 
 /**
- * @brief 启动调度
- * 
+ * @brief 释放从机句柄
+ *
+ * @param handle
  */
-void modbus_slave_poll(void);
+void mb_slv_destroy(mb_slv_handle handle);
 
-#endif /*_VIRTUAL_OS_MODBUS_SLAVE_H*/
+/**
+ * @brief modbus任务轮询
+ *
+ * @param handle 从机句柄
+ */
+void mb_slv_poll(mb_slv_handle handle);
+
+#endif

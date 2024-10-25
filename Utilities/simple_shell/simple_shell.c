@@ -42,7 +42,7 @@ static uint8_t handle_queue_buffer[HANDLE_QUEUE_SIZE];
 
 typedef struct {
 	sp_shell_opts_t opts;
-	queue_info_t handle_queue;
+	struct queue_info handle_queue;
 	uint16_t pdu_len;
 	uint8_t cmd[SPS_CMD_MAX];
 	bool is_start;
@@ -102,12 +102,15 @@ static void shell_cmd_handler(sp_shell_t *sps)
 
 	if (argc > 0) {
 		hash_error_t error;
+
 		sp_shell_cmd_t *cmd = (sp_shell_cmd_t *)hash_find(&shell_table, argv[0], &error);
+
 		if (cmd && cmd->cb && error == HASH_SUCCESS)
 			cmd->cb(argc, argv);
 	}
 
 	sps->pdu_len = 0;
+
 	memset(sps->cmd, 0, SPS_CMD_MAX);
 }
 
@@ -150,6 +153,7 @@ static void hash_save_cmd(void)
 			if (cmd)
 				hash_insert(&shell_table, cmd->name, (void *)cmd);
 		}
+
 		sps.is_hash_saved = true;
 	}
 }
@@ -158,6 +162,7 @@ static void list(int argc, char *argv[])
 {
 	if (argc == 1) {
 		const char *header = "Available commands:\n";
+
 		sps.opts.write((uint8_t *)header, strlen(header));
 
 		for (int i = 0; i < command_count; i++) {
@@ -170,6 +175,7 @@ static void list(int argc, char *argv[])
 		}
 
 		const char *footer = "\n";
+
 		sps.opts.write((uint8_t *)footer, 1);
 	}
 }
@@ -188,7 +194,7 @@ int simple_shell_init(sp_shell_opts_t *opts)
 	if (init_hash_table(&shell_table, SPS_CMD_MAX) != HASH_SUCCESS)
 		return 1;
 
-	if (queue_init(&sps.handle_queue, 1, handle_queue_buffer, HANDLE_QUEUE_SIZE) == 0)
+	if (!queue_init(&sps.handle_queue, 1, handle_queue_buffer, HANDLE_QUEUE_SIZE, NULL, NULL))
 		return 1;
 
 	sps.is_start = true;
@@ -209,5 +215,6 @@ void shell_dispatch(void)
 		return;
 
 	queue_add(&sps.handle_queue, tmp, ret);
+
 	shell_parser(&sps);
 }

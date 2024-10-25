@@ -42,7 +42,7 @@ typedef enum {
 	DAL_LOG_LEVEL_NONE = 5 /* 关闭日志 */
 } dal_log_level_e;
 
-void dal_log(dal_log_level_e level, const char *file, int line, const char *format, ...); /* 不建议使用，建议使用宏定义 */
+void dal_log(dal_log_level_e level, const char *func, int line, const char *format, ...); /* 不建议使用，建议使用宏定义 */
 
 /****************************************API****************************************/
 
@@ -55,9 +55,9 @@ uint32_t dal_log_get_time(void);
 /* 设置日志等级 */
 void dal_log_set_level(dal_log_level_e level);
 
-#define dal_log_d(format, ...) dal_log(DAL_LOG_LEVEL_DEBUG, __FILE__, __LINE__, format, ##__VA_ARGS__) /* 调试日志 */
-#define dal_log_i(format, ...) dal_log(DAL_LOG_LEVEL_INFO, __FILE__, __LINE__, format, ##__VA_ARGS__) /* 信息日志 */
-#define dal_log_w(format, ...) dal_log(DAL_LOG_LEVEL_WARN, __FILE__, __LINE__, format, ##__VA_ARGS__) /* 警告日志 */
-#define dal_log_e(format, ...) dal_log(DAL_LOG_LEVEL_ERROR, __FILE__, __LINE__, format, ##__VA_ARGS__) /* 错误日志 */
+#define dal_log_d(format, ...) dal_log(DAL_LOG_LEVEL_DEBUG, __func__, __LINE__, format, ##__VA_ARGS__) /* 调试日志 */
+#define dal_log_i(format, ...) dal_log(DAL_LOG_LEVEL_INFO, __func__, __LINE__, format, ##__VA_ARGS__) /* 信息日志 */
+#define dal_log_w(format, ...) dal_log(DAL_LOG_LEVEL_WARN, __func__, __LINE__, format, ##__VA_ARGS__) /* 警告日志 */
+#define dal_log_e(format, ...) dal_log(DAL_LOG_LEVEL_ERROR, __func__, __LINE__, format, ##__VA_ARGS__) /* 错误日志 */
 
 #endif /*_VIRTUAL_OS_DAL_LOG_H*/
