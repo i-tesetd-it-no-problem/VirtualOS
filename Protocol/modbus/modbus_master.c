@@ -131,6 +131,38 @@ static void flush_parser(struct msg_info *p_msg)
 }
 
 /**
+ * @brief 检查请求包是否合法
+ * 
+ * @param request 
+ * @return true 
+ * @return false 
+ */
+static bool check_request_valid(struct mb_mst_request *request)
+{
+	// 空指针 无响应回调 寄存器范围过大 未设置超时时间
+	if (!request || !request->resp || request->reg_len > MODBUS_REG_NUM_MAX || !request->timeout_ms)
+		return false;
+
+	switch (request->func) {
+	case MODBUS_FUN_RD_REG_MUL:
+		// 读功能玛
+		break;
+	case MODBUS_FUN_WR_REG_MUL:
+		// 写功能码
+
+		// 无数据 数据长度为0 写入寄存器长度超过buffer最大长度
+		if (!request->data || !request->data_len || request->reg_len * 2 > request->data_len)
+			return false;
+
+		break;
+	default:
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * @brief 解析协议数据帧, 支持粘包断包处理
  * 
  * @param handle 主机句柄
@@ -260,7 +292,7 @@ static void _dispatch_rtu_msg(mb_mst_handle handle)
  */
 static bool check_timeout(mb_mst_handle handle, struct mb_mst_request *request)
 {
-	if (!handle || !request)
+	if (!handle || !check_request_valid(request))
 		return false;
 
 	bool ret = (request->_hide_[TIMEOUT_IDX] == 0) ? true : false; // 0超时 初始也算一次
@@ -280,7 +312,7 @@ static bool check_timeout(mb_mst_handle handle, struct mb_mst_request *request)
  */
 static void _request_pdu(mb_mst_handle handle, struct mb_mst_request *request)
 {
-	if (!handle || !request)
+	if (!handle || !check_request_valid(request))
 		return;
 
 	uint8_t temp_buf[256] = { 0 };
@@ -369,38 +401,6 @@ static void master_read(mb_mst_handle handle)
 	_dispatch_rtu_msg(handle); // 处理数据帧, 调用用户回调注册表
 }
 
-/**
- * @brief 检查请求包是否合法
- * 
- * @param request 
- * @return true 
- * @return false 
- */
-static bool check_request_valid(struct mb_mst_request *request)
-{
-	// 空指针 无响应回调 寄存器范围过大 未设置超时时间
-	if (!request || !request->resp || request->reg_len > MODBUS_REG_NUM_MAX || !request->timeout_ms)
-		return false;
-
-	switch (request->func) {
-	case MODBUS_FUN_RD_REG_MUL:
-		// 读功能玛
-		break;
-	case MODBUS_FUN_WR_REG_MUL:
-		// 写功能码
-
-		// 无数据 数据长度为0 写入寄存器长度超过buffer最大长度
-		if (!request->data || !request->data_len || request->reg_len * 2 > request->data_len)
-			return false;
-
-		break;
-	default:
-		return false;
-	}
-
-	return true;
-}
-
 /***************************API***************************/
 
 /**
@@ -408,7 +408,7 @@ static bool check_request_valid(struct mb_mst_request *request)
  *
  * @param opts 读写等回调函数指针
  * @param period_ms 轮训周期
- * @return mb_mst_handle 成功返回句柄，失败返回NULL
+ * @return mb_mst_handle 成功返回句柄,失败返回NULL
  */
 mb_mst_handle mb_mst_init(struct serial_opts *opts, size_t period_ms)
 {
