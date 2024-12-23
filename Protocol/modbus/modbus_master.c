@@ -367,6 +367,7 @@ static void master_write(mb_mst_handle handle)
 			return;
 
 		_request_pdu(handle, request); // 每超时一次发送一次
+		request->_hide_[REPEAT_IDX]++;
 	} else {
 		// 重发完 才出队
 		request->_hide_[REPEAT_IDX] = 0;
