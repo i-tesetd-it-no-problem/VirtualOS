@@ -1,6 +1,6 @@
 # 设备抽象层 (Device Abstraction Layer)
 
-设备抽象层（DAL，Device Abstraction Layer）是一个用于封装底层设备访问的接口层。它为应用层提供了一组统一的设备操作接口，使得应用层可以直接调用相关的读写等操作，而不需要关心底层设备的具体实现。
+设备抽象层（dal，Device Abstraction Layer）是一个用于封装底层设备访问的接口层。它为应用层提供了一组统一的设备操作接口，使得应用层可以直接调用相关的读写等操作，而不需要关心底层设备的具体实现。
 
 ## 接口概述
 
@@ -95,7 +95,7 @@
 - 成功时返回由驱动程序定义的值。
 - 失败时返回错误码（<0），参考错误码说明。
 
-### `int dal_lseek(int fd, int offset, dal_lseek_whence_e whence);`
+### `int dal_lseek(int fd, int offset, enum dal_lseek_whence whence);`
 
 设置文件偏移量。
 

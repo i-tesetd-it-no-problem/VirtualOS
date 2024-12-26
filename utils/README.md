@@ -1,7 +1,34 @@
-# 协议 (protocol)
+## 工具(utils)
 
-## MODBUS
- - ModBus协议
+### button 
+ - 按键组件
+  
+### crc 
+ - crc校验
+
+### h_tree
+ - 层次树组件
+
+### hash 
+ - 哈希组件
+
+### list 
+ - 双向循环链表组件
+
+### qfsm 
+ - 有限状态机组件
+
+### queue 
+ - 循环队列组件
+
+### simple_shell
+ - 简易的Shell组件
+
+### soft_iic 
+ - 软件IIC组件
+
+### stimer 
+ - 调度组件
 
 ## 许可证
 

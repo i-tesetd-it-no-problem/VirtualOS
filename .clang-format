@@ -6,7 +6,7 @@ ContinuationIndentWidth: 4         # 换行续行缩进为 4
 IndentCaseLabels: false            # 不缩进 switch 语句的 case 标签
 
 # 行宽限制
-ColumnLimit:     100               # 每行最多 80 个字符
+ColumnLimit:     120               # 每行最多 80 个字符
 
 # 大括号样式
 BreakBeforeBraces: Linux           # 使用 Linux 风格的大括号位置

@@ -1,4 +1,4 @@
-# Component (组件)
+# component (组件)
 
  - 一些开源组件
 

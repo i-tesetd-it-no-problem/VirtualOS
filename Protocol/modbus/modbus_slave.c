@@ -27,9 +27,9 @@
  *
  */
 
-#include "crc.h"
-#include "queue.h"
-#include "modbus_slave.h"
+#include "utils/crc.h"
+#include "utils/queue.h"
+#include "protocol/modbus/modbus_slave.h"
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -250,8 +250,7 @@ static bool _recv_parser(mb_slv_handle handle)
 			p_msg->pdu.data[p_msg->pdu_in++] = c;
 			if (p_msg->pdu_in >= p_msg->pdu_len) {
 				if (p_msg->cal_crc ==
-					COMBINE_U8_TO_U16(
-						p_msg->pdu.data[p_msg->pdu_in - 1], p_msg->pdu.data[p_msg->pdu_in - 2])) {
+					COMBINE_U8_TO_U16(p_msg->pdu.data[p_msg->pdu_in - 1], p_msg->pdu.data[p_msg->pdu_in - 2])) {
 					flush_parser(p_msg);
 					return true;
 				} else
@@ -311,10 +310,8 @@ static uint16_t _packet_ack_read_frame(mb_slv_handle handle)
 	uint16_t crc = 0xffff;
 	uint16_t *p;
 
-	uint16_t reg =
-		COMBINE_U8_TO_U16(handle->msg_state.pdu.read.reg_h, handle->msg_state.pdu.read.reg_l);
-	uint16_t reg_num =
-		COMBINE_U8_TO_U16(handle->msg_state.pdu.read.num_h, handle->msg_state.pdu.read.num_l);
+	uint16_t reg = COMBINE_U8_TO_U16(handle->msg_state.pdu.read.reg_h, handle->msg_state.pdu.read.reg_l);
+	uint16_t reg_num = COMBINE_U8_TO_U16(handle->msg_state.pdu.read.num_h, handle->msg_state.pdu.read.num_l);
 
 	uint8_t *pdata_out = handle->modbus_frame_buff; // 存储回复的数据
 
@@ -356,10 +353,8 @@ static uint16_t _packet_ack_write_frame(mb_slv_handle handle)
 
 	int ret_flag = MODBUS_RESP_ERR_OTHER; // 用户响应结果
 
-	uint16_t reg =
-		COMBINE_U8_TO_U16(handle->msg_state.pdu.write.reg_h, handle->msg_state.pdu.write.reg_l);
-	uint16_t reg_num =
-		COMBINE_U8_TO_U16(handle->msg_state.pdu.write.num_h, handle->msg_state.pdu.write.num_l);
+	uint16_t reg = COMBINE_U8_TO_U16(handle->msg_state.pdu.write.reg_h, handle->msg_state.pdu.write.reg_l);
+	uint16_t reg_num = COMBINE_U8_TO_U16(handle->msg_state.pdu.write.num_h, handle->msg_state.pdu.write.num_l);
 
 	uint8_t *pdata_out = handle->modbus_frame_buff; // 存储响应数据
 
@@ -455,8 +450,7 @@ mb_slv_handle mb_slv_init(
 	handle->slave_addr = slv_addr;
 	handle->is_sending = false;
 
-	ret = queue_init(
-		&handle->msg_state.rx_q, sizeof(uint8_t), handle->msg_state.rx_queue_buff, RX_BUFF_SIZE);
+	ret = queue_init(&handle->msg_state.rx_q, sizeof(uint8_t), handle->msg_state.rx_queue_buff, RX_BUFF_SIZE);
 	if (!ret) {
 		free(handle);
 		return NULL;

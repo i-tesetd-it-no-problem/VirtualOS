@@ -27,14 +27,14 @@
  * 
  */
 
-#include "crc.h"
-#include "queue.h"
+#include "utils/crc.h"
+#include "utils/queue.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "modbus_master.h"
+#include "protocol/modbus/modbus_master.h"
 
 #define REPEAT_IDX (0)	// 重发
 #define TIMEOUT_IDX (1) // 超时
@@ -278,8 +278,7 @@ static void _dispatch_rtu_msg(mb_mst_handle handle)
 
 	// 出队请求
 	queue_get(&handle->msg_state.tx_q, (uint8_t *)&request, 1);
-	request->resp(
-		handle->msg_state.r_data, handle->msg_state.r_data_len, false); // 用户回调(未超时)
+	request->resp(handle->msg_state.r_data, handle->msg_state.r_data_len, false); // 用户回调(未超时)
 }
 
 /**
@@ -372,8 +371,7 @@ static void master_write(mb_mst_handle handle)
 		// 重发完 才出队
 		request->_hide_[REPEAT_IDX] = 0;
 		queue_get(&handle->msg_state.tx_q, (uint8_t *)&request, 1);
-		request->resp(
-			handle->msg_state.r_data, handle->msg_state.r_data_len, true); // 用户回调(超时)
+		request->resp(handle->msg_state.r_data, handle->msg_state.r_data_len, true); // 用户回调(超时)
 	}
 }
 
@@ -427,16 +425,15 @@ mb_mst_handle mb_mst_init(struct serial_opts *opts, size_t period_ms)
 	handle->is_sending = false;
 
 	// 接收队列
-	ret = queue_init(
-		&handle->msg_state.rx_q, sizeof(uint8_t), handle->msg_state.rx_queue_buff, RX_BUFF_SIZE);
+	ret = queue_init(&handle->msg_state.rx_q, sizeof(uint8_t), handle->msg_state.rx_queue_buff, RX_BUFF_SIZE);
 	if (!ret) {
 		free(handle);
 		return NULL;
 	}
 
 	// 发送队列
-	ret = queue_init(&handle->msg_state.tx_q, sizeof(struct mb_mst_request *),
-		handle->msg_state.tx_queue_buff, MAX_REQUEST);
+	ret = queue_init(
+		&handle->msg_state.tx_q, sizeof(struct mb_mst_request *), handle->msg_state.tx_queue_buff, MAX_REQUEST);
 	if (!ret) {
 		free(handle);
 		return NULL;
