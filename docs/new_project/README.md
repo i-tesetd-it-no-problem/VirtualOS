@@ -380,8 +380,9 @@ void app_led_task(void)
 ```c
 #include <stdint.h>
 
-#include "systick.h"
+#include "utils/stimer.h"
 
+#include "systick.h"
 #include "app_led.h"
 
 int main(void)
@@ -547,3 +548,98 @@ GROUP(libgcc.a libc.a libm.a libnosys.a)
 ```
 - 最终编译成功结果如下
 ![alt text](image-9.png)
+
+## 11. 设置快捷编译
+ - 在根路径下新建.vscode文件夹
+ - 在.vscode文件夹下新建`tasks.json`文件
+ - 写入如下内容
+```json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake Build",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build" // 编译文件夹路径
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}
+
+```
+
+## 12. 下载运行结果
+
+1. 使用OpenOCD
+ - 在根路径下新建.vscode文件夹
+ - 在.vscode文件夹下新建`launch.json`文件
+ - 写入如下内容
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Cortex Debug",
+        "cwd": "${workspaceFolder}",
+        "executable": "${workspaceFolder}/build/Test", // 编译生成的ELF文件
+        "request": "launch",
+        "type": "cortex-debug",
+        "runToEntryPoint": "main",
+        "servertype": "openocd",
+        "device": "GD32F303ZGT6", // 芯片型号
+        "svdPath": "C:/vscode_embeded/EmbeddedBuilder_v1.4.1.23782/EmbeddedBuilder/plugins/com.gigadevice.resources_1.0.0.202406140948/svd/GD32F30x_XD.svd", // SVD文件路径 可查看芯片寄存器信息 在官方SDK中
+        "liveWatch": {
+          "enabled": true,
+          "samplesPerSecond": 1
+        },
+        "configFiles": [
+          "${workspaceFolder}/config/openocd_gdlink.cfg" // openocd配置文件路径
+        ],
+        "interface": "swd",
+        "showDevDebugOutput": "both",
+        "toolchainPrefix": "arm-none-eabi",
+        "preLaunchTask": "CMake Build" // 调试下载前执行编译任务 第11步的任务名称
+      }
+    ]
+  }
+```
+
+2. 使用Jlink
+ - 在根路径下新建.vscode文件夹
+ - 在.vscode文件夹下新建`launch.json`文件
+ - 写入如下内容
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Cortex Debug",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/Test", // 编译生成的ELF文件
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "main",
+            "serverpath": "C:/Program Files/SEGGER/JLink_V798a/JLinkGDBServerCL.exe", // JLinkGDBServerCL.exe路径
+            "servertype": "jlink",
+            "device": "GD32F303ZGT6", /* 芯片型号 */
+            "svdPath": "C:/vscode_embeded/EmbeddedBuilder_v1.4.1.23782/EmbeddedBuilder/plugins/com.gigadevice.resources_1.0.0.202406140948/svd/GD32F30x_XD.svd", // SVD文件路径 可查看芯片寄存器信息 在官方SDK中
+            "preLaunchTask": "CMake Build",  // 调试下载前执行编译任务 第11步的任务名称
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 1
+            },
+        }
+    ]
+}
+```
