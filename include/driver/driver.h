@@ -63,16 +63,15 @@ struct drv_file;
 // 驱动文件
 struct drv_file {
 	const struct file_operations *opts; /* 文件操作接口 */
-	size_t dev_size;					/* 设备大小 */
 	bool is_opened;						/* 是否已打开 */
-	void *private_data;					/* 私有数据 */
+	void *private;						/* 私有数据 */
 };
 
 // 驱动设备
 struct drv_device {
 	struct drv_file *file; // 文件
+	size_t dev_size;	   /* 设备大小 */
 	size_t offset;		   // 文件偏移
-	void *private_data;	   /* 私有数据 */
 };
 
 /****************************USER API*****************************/
@@ -91,7 +90,7 @@ struct file_operations {
 	void (*_func##_ptr)(void) __attribute__((section(".early_driver"), used)) = &_func;
 
 // 驱动初始化函数指针
-typedef bool (*driver_init)(void);
+typedef bool (*driver_init)(struct drv_device *dev);
 
 /**
  * @brief 注册设备
@@ -103,5 +102,21 @@ typedef bool (*driver_init)(void);
  * @return false 
  */
 bool driver_register(driver_init drv_init, const struct file_operations *file_opts, const char *name);
+
+/**
+ * @brief 设置设备私有数据
+ * 
+ * @param dev 设备结构体
+ * @param private 私有数据
+ */
+void set_dev_private(struct drv_device *dev, void *private);
+
+/**
+ * @brief 获取设备私有数据
+ * 
+ * @param name 设备名称
+ * @return void* 私有数据
+ */
+void *get_dev_private(const char *name);
 
 #endif /* __VIRTUAL_OS_DRIVER_H__ */

@@ -3,7 +3,7 @@
  * @author wenshuyu (wsy2161826815@163.com)
  * @brief 日志组件
  * @version 0.1
- * @date 2024-12-24
+ * @date 2024-12-27
  * 
  * @copyright Copyright (c) 2024
  * 
@@ -76,13 +76,13 @@ void syslog_init(struct log_interface *interface, uint32_t period_ms);
 void syslog_task(void);
 
 /* 设置系统时间戳 */
-void set_log_time(uint32_t timestamp);
+void syslog_set_time(uint32_t timestamp);
 
 /* 获取系统当前时间戳 */
-uint32_t get_log_time(void);
+uint32_t syslog_get_time(void);
 
 /* 设置日志等级 */
-void log_set_level(enum log_level level);
+void syslog_set_level(enum log_level level);
 
 /* 日志宏定义 */
 #define log_d(format, ...) origin_log(LOG_LEVEL_DEBUG, __func__, __LINE__, format, ##__VA_ARGS__) /* 调试日志 */

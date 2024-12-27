@@ -61,7 +61,7 @@ enum hash_error init_hash_table(struct hash_table *hash_table, size_t table_size
 	return HASH_SUCCESS;
 }
 
-enum hash_error hash_insert(struct hash_table *hash_table, const char *key, void *private_data)
+enum hash_error hash_insert(struct hash_table *hash_table, const char *key, void *private)
 {
 	if (!hash_table || !key)
 		return HASH_POINT_ERROR;
@@ -74,7 +74,7 @@ enum hash_error hash_insert(struct hash_table *hash_table, const char *key, void
 		struct string_hash_node *node = container_of(pos, struct string_hash_node, list);
 
 		if (strcmp(node->key, key) == 0) {
-			node->private_data = private_data;
+			node->private = private;
 
 			return HASH_SUCCESS;
 		}
@@ -94,7 +94,7 @@ enum hash_error hash_insert(struct hash_table *hash_table, const char *key, void
 	}
 	strcpy(new_node->key, key);
 
-	new_node->private_data = private_data;
+	new_node->private = private;
 	list_add_tail(&hash_table->table[index], &new_node->list);
 
 	return HASH_SUCCESS;
@@ -120,7 +120,7 @@ void *hash_find(struct hash_table *hash_table, const char *key, enum hash_error 
 			if (error)
 				*error = HASH_SUCCESS;
 
-			return node->private_data;
+			return node->private;
 		}
 	}
 

@@ -42,7 +42,7 @@ enum hash_error {
 
 struct string_hash_node {
 	char *key;
-	void *private_data;
+	void *private;
 	list_item list;
 };
 
@@ -65,10 +65,10 @@ enum hash_error init_hash_table(struct hash_table *hash_table, size_t table_size
  *
  * @param hash_table 表实例
  * @param key 字符串
- * @param private_data 需要存储数据的指针
+ * @param private 需要存储数据的指针
  * @return enum hash_error 错误码
  */
-enum hash_error hash_insert(struct hash_table *hash_table, const char *key, void *private_data);
+enum hash_error hash_insert(struct hash_table *hash_table, const char *key, void *private);
 
 /**
  * @brief 哈希查找

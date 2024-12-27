@@ -1,4 +1,4 @@
-# 新建工程文档, 以GD32F30x项目为例(重新更新于2024-12-26)
+# 点灯案例, 以GD32F30x芯片为例(重新更新于2024-12-26)
 
 ## 1. 从[GD官网](https://www.gd32mcu.com/cn/download/7?kw=GD32F3)中下载SDK，并找到GD32F30x的路径
 ![alt text](image.png)
@@ -238,7 +238,7 @@ int main(void)
 
 ## 7. 编写LED驱动代码
  - 在新建的driver文件中新建文件,如 `led_driver.c`
- - 参考驱动编写模板 [driver/README.md](../../driver/README.md)
+ - 参考[驱动编写模板](../driver/README.md)
  - 修改后的代码如下所示
 ```c
 #include <stdbool.h>
@@ -258,7 +258,7 @@ static int led_open(struct drv_file *file)
 	if (file->is_opened)
 		return DRV_ERR_OCCUPIED;
 
-    /* 打开外设 */
+	/* 打开外设 */
 
 	file->is_opened = true;
 
@@ -299,7 +299,7 @@ static size_t led_write(struct drv_file *file, uint8_t *buf, size_t len, size_t 
 	if (!file->is_opened)
 		return DRV_ERR_UNAVAILABLE;
 
-    gpio_bit_write(GPIOE, GPIO_PIN_5, (*buf ? SET : RESET));
+	gpio_bit_write(GPIOE, GPIO_PIN_5, (*buf ? SET : RESET));
 
 	return 1; /* 写入成功返回实际写入的字节数 */
 }
@@ -314,10 +314,10 @@ static const struct file_operations led_dev = {
 };
 
 // 设备驱动初始化
-static bool led_driver_init(void)
+static bool led_driver_init(struct drv_device *dev)
 {
 	/* 外设初始化 */
-    rcu_periph_clock_enable(RCU_GPIOE);
+	rcu_periph_clock_enable(RCU_GPIOE);
 	gpio_init(GPIOE, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_5);
 
 	return true;
@@ -334,7 +334,7 @@ void led_driver_probe(void)
 ## 8. 编写LED应用代码
  - 在`app/src`文件夹中新建文件,如 `app_led.c`
  - 在`app/inc`文件夹中新建文件,如 `app_led.h`
- - 编写了LED驱动后即可使用VirtualOS/dal/dal_opt.h中提供的接口使用其中的每个
+ - 编写了LED驱动后，即可使用`VirtualOS/dal/dal_opt.h`中提供的接口,其中的每个
    接口都与驱动的`struct file_operations`一一对应
  - 参考代码如下
 ```c

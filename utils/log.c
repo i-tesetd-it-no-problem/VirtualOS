@@ -3,7 +3,7 @@
  * @author wenshuyu (wsy2161826815@163.com)
  * @brief 日志组件
  * @version 0.1
- * @date 2024-12-24
+ * @date 2024-12-27
  * 
  * @copyright Copyright (c) 2024
  * 
@@ -32,9 +32,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include "utils/log.h"
-#include "dal/dal_opt.h"
 #include "utils/queue.h"
 
 #if USE_TIME_STAMP
@@ -46,7 +46,7 @@
 			: (level) == LOG_LEVEL_INFO	 ? "INFO"                                                                      \
 			: (level) == LOG_LEVEL_WARN	 ? "WARN"                                                                      \
 			: (level) == LOG_LEVEL_ERROR ? "ERROR"                                                                     \
-										 : "UNKNOWN")
+										 : "XXXXX")
 
 static uint8_t log_buffer[LOG_BUFFER_SIZE]; /* 日志缓冲区 */
 
@@ -106,35 +106,27 @@ static size_t syslog_write(struct syslog_instance *instance, uint8_t *buf, size_
 	if (new_len >= MAX_LOG_LENGTH) {
 		// 如果日志长度超过最大长度，截断
 		new_len = MAX_LOG_LENGTH - 1;
-		new_buf[new_len] = '\0';
+		// 移除手动添加 '\0'
 	}
-#else
-	const char *new_buf = (const char *)buf;
-	size_t new_len = len;
-	if (new_len >= MAX_LOG_LENGTH) {
-		// 如果日志长度超过最大长度，截断
-		new_len = MAX_LOG_LENGTH - 1;
-	}
+
+	// 使用 new_buf 作为要发送的日志内容
+	buf = (uint8_t *)new_buf;
+	len = new_len;
 #endif
 
-	size_t total_len = (size_t)(new_len + sizeof(size_t)); // 2 字节用于存储长度信息
+	size_t total_len = len + sizeof(size_t); // 2 字节用于存储长度信息
 
 	if (queue_remain_space(&instance->log_queue) < total_len) {
 		queue_advance_rd(&instance->log_queue, total_len);
 	}
 
-	// 检查 queue_add 是否成功
-	if (queue_add(&instance->log_queue, (uint8_t *)&total_len, sizeof(size_t)) != sizeof(size_t)) {
-		// 添加长度信息失败
+	if (queue_add(&instance->log_queue, (uint8_t *)&len, sizeof(size_t)) != sizeof(size_t))
 		return 0;
-	}
 
-	if (queue_add(&instance->log_queue, (uint8_t *)new_buf, new_len) != new_len) {
-		// 添加日志内容失败
+	if (queue_add(&instance->log_queue, buf, len) != len)
 		return 0;
-	}
 
-	return new_len;
+	return len;
 }
 
 /**
@@ -156,25 +148,24 @@ static void syslog_show(struct syslog_instance *instance)
 	}
 #endif
 
-	if (is_queue_empty(&instance->log_queue) || !instance->interface->check_over)
-		return;
+	while (!is_queue_empty(&instance->log_queue) && instance->interface->check_over()) {
+		// 日志长度信息
+		size_t flush_len = 0;
+		if (queue_get(&instance->log_queue, (uint8_t *)&flush_len, sizeof(size_t)) != sizeof(size_t)) {
+			return;
+		}
 
-	// 日志长度信息
-	size_t flush_len = 0;
-	if (queue_get(&instance->log_queue, (uint8_t *)&flush_len, sizeof(size_t)) != sizeof(size_t)) {
-		return;
+		if (flush_len == 0 || flush_len > MAX_LOG_LENGTH)
+			return;
+
+		// 取出日志
+		uint8_t tmp_buf[MAX_LOG_LENGTH];
+		if (queue_get(&instance->log_queue, tmp_buf, flush_len) != flush_len)
+			return;
+
+		// 发送日志
+		instance->interface->write(tmp_buf, flush_len);
 	}
-
-	if (flush_len == 0 || flush_len > MAX_LOG_LENGTH)
-		return;
-
-	// 取出日志
-	uint8_t tmp_buf[MAX_LOG_LENGTH];
-	if (queue_get(&instance->log_queue, tmp_buf, flush_len) != flush_len)
-		return;
-
-	// 发送日志
-	instance->interface->write(tmp_buf, flush_len);
 }
 
 /**************************API**************************/
@@ -231,7 +222,7 @@ void origin_log(enum log_level level, const char *func, int line, const char *fo
 
 	va_start(args, format);
 
-	len = snprintf(buffer, sizeof(buffer), "[%s] [%s : %d] : ", LOG_LEVEL_STR(level), func, line);
+	len = snprintf(buffer, sizeof(buffer), "[%-5s] [%-20s:%-4d] : ", LOG_LEVEL_STR(level), func, line);
 
 	if (len < 0) {
 		// snprintf 出错
@@ -239,26 +230,18 @@ void origin_log(enum log_level level, const char *func, int line, const char *fo
 		return;
 	}
 
-	int remaining_space = MAX_LOG_LENGTH - len - 1;
+	int remaining_space = MAX_LOG_LENGTH - len;
 
-	if (remaining_space > 0) {
+	if (remaining_space > 1) {
 		int formatted_len = vsnprintf(buffer + len, remaining_space, format, args);
-		if (formatted_len < 0) {
-			// vsnprintf 出错
-			buffer[MAX_LOG_LENGTH - 1] = '\0';
+		if (formatted_len < 0)
 			len = MAX_LOG_LENGTH - 1;
-		} else if (formatted_len >= remaining_space) {
-			// 截断日志信息
-			buffer[MAX_LOG_LENGTH - 1] = '\0';
+		else if (formatted_len >= remaining_space)
 			len = MAX_LOG_LENGTH - 1;
-		} else {
+		else
 			len += formatted_len;
-		}
-	} else {
-		// 缓冲区已满
-		buffer[MAX_LOG_LENGTH - 1] = '\0';
+	} else
 		len = MAX_LOG_LENGTH - 1;
-	}
 
 	va_end(args);
 
@@ -270,26 +253,23 @@ void origin_log(enum log_level level, const char *func, int line, const char *fo
  * 
  * @param level 日志等级
  */
-void log_set_level(enum log_level level)
+void syslog_set_level(enum log_level level)
 {
-	if (check_instance(&syslog)) {
+	if (check_instance(&syslog))
 		syslog.current_log_level = level;
-	}
 }
 
 /* 设置系统时间戳 */
-void set_log_time(uint32_t timestamp)
+void syslog_set_time(uint32_t timestamp)
 {
-	if (check_instance(&syslog)) {
+	if (check_instance(&syslog))
 		syslog.timestamp = timestamp;
-	}
 }
 
 /* 获取系统当前时间戳 */
-uint32_t get_log_time(void)
+uint32_t syslog_get_time(void)
 {
-	if (check_instance(&syslog)) {
+	if (check_instance(&syslog))
 		return syslog.timestamp;
-	}
 	return 0;
 }

@@ -69,7 +69,7 @@ bool driver_register(driver_init drv_init, const struct file_operations *file_op
 
 	dev->file->opts = file_opts;
 
-	if (!drv_init())
+	if (!drv_init(dev))
 		goto free_file;
 
 	err = hash_insert(&driver_table, name, (void *)dev);
@@ -102,4 +102,31 @@ struct drv_device *find_device(const char *name)
 		return dev;
 	else
 		return NULL;
+}
+
+/**
+ * @brief 设置设备私有数据
+ * 
+ * @param dev 设备结构体
+ * @param private 私有数据
+ */
+void set_dev_private(struct drv_device *dev, void *private)
+{
+	if (!dev || !dev->file)
+		return;
+	dev->file->private = private;
+}
+
+/**
+ * @brief 获取设备私有数据
+ * 
+ * @param name 设备名称
+ * @return void* 私有数据
+ */
+void *get_dev_private(const char *name)
+{
+	struct drv_device *dev = find_device(name);
+	if (!dev || !dev->file)
+		return NULL;
+	return dev->file->private;
 }

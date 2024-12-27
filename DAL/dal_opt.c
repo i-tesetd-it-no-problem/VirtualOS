@@ -156,9 +156,9 @@ int dal_lseek(int fd, int offset, enum dal_lseek_whence whence)
 	if (err != DAL_ERR_NONE)
 		return err;
 
-	uint32_t cur_offset = dev->offset;		  // 当前偏移
-	uint32_t dev_size = dev->file->dev_size; // 设备大小
-	uint32_t dest_offset = 0;				  // 目标偏移
+	uint32_t cur_offset = dev->offset; // 当前偏移
+	uint32_t dev_size = dev->dev_size; // 设备大小
+	uint32_t dest_offset = 0;		   // 目标偏移
 
 	switch (whence) {
 	case DAL_LSEEK_WHENCE_HEAD: /* 从文件头开始 */

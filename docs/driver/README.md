@@ -16,7 +16,7 @@ static int xxx_open(struct drv_file *file)
 	if (file->is_opened)
 		return DRV_ERR_OCCUPIED;
 
-    /* 打开外设 */
+	/* 打开外设 */
 
 	file->is_opened = true;
 
@@ -57,7 +57,7 @@ static size_t xxx_write(struct drv_file *file, uint8_t *buf, size_t len, size_t 
 	if (!file->is_opened)
 		return DRV_ERR_UNAVAILABLE;
 
-	return 0; /* 写入成功返回实际写入的字节数 */
+	return 1; /* 写入成功返回实际写入的字节数 */
 }
 
 // 设备操作接口
@@ -70,7 +70,7 @@ static const struct file_operations xxx_dev = {
 };
 
 // 设备驱动初始化
-static bool xxx_driver_init(void)
+static bool xxx_driver_init(struct drv_device *dev)
 {
 	/* 外设初始化 */
 
