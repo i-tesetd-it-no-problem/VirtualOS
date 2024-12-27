@@ -12,16 +12,16 @@
  - 新建`config`文件夹存放配置文件，例如链接文件和openocd配置文件
  - 新建`CMakeLists.txt`文件，用于编写项目构建配置
  - 最终效果如图所示：
- ![alt text](image-2.png)
+![alt text](image-2.png)
 
 ## 3. 删除官方案例代码
  - 清空`main.c`文件
  - 删除图中两个文件`gd32f307c_eval.c/h`
- ![alt text](image-3.png)
+![alt text](image-3.png)
 
 ## 4. 修改交叉编译器路径
  - 修改`VirtualOS/toolchain.cmake`中的编译器根路径为自己本地路径(首页已指定了下载链接)，如图所示：
- ![alt text](image-4.png)
+![alt text](image-4.png)
   
 ## 5. 修改CMakeLists.txt文件
  - 关键修改部分已经用```!!!```标注，其他部分可以不用修改, 请勿随意修改配置顺序, 实际使用时请根据自己的项目修改
@@ -411,15 +411,15 @@ int main(void)
  - --build 为编译命令 后面跟着编译文件夹名
  - 该命令会编译整个工程将编译生成的可执行文件拷贝到build目录下的output文件夹中(output在CMakeLists.txt中已经)
  - 最终编译成功结果如下
- ![alt text](image-9.png)
+![alt text](image-9.png)
 
  - 以下为`GD32F30x`需要额外修改的地方，其他平台以及芯片类型请自行根据错误修改
  - 当前工程直接编译会出错, 修改需要修改官方SDK中的`gd32f30x.h`文件, 添加一个宏定义
- ![alt text](image-6.png)
+![alt text](image-6.png)
  - 修改官方的链接文件`gd32f30x_flash.ld`的芯片FLASH与RAM定义，如下所示
- ![alt text](image-7.png)
+![alt text](image-7.png)
  - 将最下面的栈定义替换如下所示
- ![alt text](image-8.png)
+![alt text](image-8.png)
  - 最终文件为如下所示
 ```ld
 /* memory map */

@@ -2,10 +2,10 @@
  * @file button.h
  * @author wenshuyu (wsy2161826815@163.com)
  * @brief 按键组件
- * @version 1.0
- * @date 2024-08-12
+ * @version 0.1
+ * @date 2024-12-27
  * 
- * The MIT License (MIT)
+ * @copyright Copyright (c) 2024
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -14,16 +14,16 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  * 
  */
 
@@ -32,67 +32,62 @@
 
 #include <stdint.h>
 
-enum button_event {
-	BTN_EVENT_NONE,
-	BTN_EVENT_POPUP,
-	BTN_EVENT_SINGLE_CLICK,
-	BTN_EVENT_DOUBLE_CLICK,
-	BTN_EVENT_MORE_CLICK,
-	BTN_EVENT_LONG_CLICK,
+typedef struct button *btn_handle;
+
+// 用户按键事件类型
+enum usr_btn_ev {
+	USR_BTN_EV_NONE,  // 无事件
+	USR_BTN_EV_POPUP, // 弹起事件
+	/* 以上事件用户无需判断 */
+
+	USR_BTN_EV_SINGLE_CLICK = 2, // 单击事件
+	USR_BTN_EV_DOUBLE_CLICK,	 // 双击事件
+	USR_BTN_EV_MORE_CLICK,		 // 多击事件
+	USR_BTN_EV_LONG_CLICK,		 // 长按事件
 };
 
-typedef struct {
-	enum button_event ev_type; /* 按键的事件 */
-	uint32_t clicks;		   /* 按下的次数 */
-} button_ev_t;
+// 按键事件数据
+struct btn_ev_data {
+	enum usr_btn_ev ev_type; /* 按键的事件类型 */
+	uint32_t clicks;		 /* 按下的次数 */
+};
 
 enum button_level {
-	BUTTON_LEVEL_LOW,
-	BUTTON_LEVEL_HIGH,
+	BUTTON_LEVEL_LOW,  // 低电平有效
+	BUTTON_LEVEL_HIGH, // 高电平有效
 };
 
-struct button_jitter {
-	uint8_t previous;
-	uint8_t asserted;
-};
+typedef void (*btn_usr_cb)(const struct btn_ev_data *ev_data); // 按键事件回调
 
-struct button_state {
-	void *state;
-	struct button_jitter jit;
-	uint32_t click_cnt;
-	uint32_t counter;
-};
-
-typedef uint8_t (*btn_io_read)(void);
-
-typedef void (*btn_event_callback)(const button_ev_t *p_ev);
-
-struct button_cfg {
-	btn_io_read f_io_read;		 /* 读按键 IO 的函数指针 */
-	uint32_t long_min_cnt;		 /* 按下按键切换到长按事件最少维持的周期 */
-	uint32_t up_max_cnt;		 /* 按键弹起到再次按下事件最多维持的周期 */
+// 按键配置结构体
+struct btn_cfg {
+	uint8_t (*f_io_read)(void);	 /* 读 IO 回调 */
+	uint32_t long_min_cnt;		 /* 按下按键切换到长按事件最少维持的周期次数 */
+	uint32_t up_max_cnt;		 /* 按键弹起到再次按下事件最多维持的周期次数 */
 	enum button_level active_lv; /* 按下的有效电平 */
 };
 
-struct button {
-	struct button_cfg cfg;
-	struct button_state state;
-	btn_event_callback f_ev_cb;
-};
+/**
+ * @brief 创建按键实例
+ * 
+ * @param p_cfg 参数配置
+ * @param cb 按键事件回调
+ * @return btn_handle 成功返回句柄，失败时返回 NULL
+ */
+btn_handle button_ctor(const struct btn_cfg *p_cfg, btn_usr_cb cb);
 
 /**
- * 按键实例的构造函数
- * @param cfg 按键的一些关键配置参数
- * @param cb 按键事件的回调
- * @return 返回按键的实例
+ * @brief 销毁按键实例，释放资源
+ * 
+ * @param btn 按键句柄
  */
-struct button button_ctor(struct button_cfg *cfg, btn_event_callback cb);
+void button_destroy(btn_handle btn);
 
 /**
- * 对按键进行扫描，需要由调用方周期性执行，这个周期一般设定为按键的防抖间隔
- * @param p_btn 按键的实例
- * @return 返回当前的事件
+ * @brief 对按键进行扫描，需要由调用方周期性执行，这个周期一般设定为按键的防抖间隔
+ * 
+ * @param btn 按键句柄
  */
-enum button_event button_scan(struct button *p_btn);
+void button_scan(btn_handle btn);
 
-#endif /*_VIRTUAL_OS_BUTTON_H*/
+#endif /* _VIRTUAL_OS_BUTTON_H */

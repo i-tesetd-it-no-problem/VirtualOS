@@ -54,3 +54,4 @@ VirtualOS 是一个基于前后台调度为核心搭建的裸机嵌入式开发�
 ## 使用说明
 1. [新建工程](./docs/new_project/README.md)
 2. [如何使用日志组件](./docs/config_log/README.md)
+3. [如何使用按键组件](./docs/config_btn/README.md)
