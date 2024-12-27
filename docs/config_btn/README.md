@@ -199,6 +199,30 @@ void app_key_task(void)
 }
 ```
 
-### 3. 编译烧录后
+### 3. 新建按键任务
+ - 在main函数中新建任务，参考代码如下
+```c
+#include <stdint.h>
+#include <stddef.h>
+
+#include "utils/stimer.h"
+
+#include "systick.h"
+
+#include "app_key.h"
+
+int main(void)
+{
+	app_system_init(); // 初始化VirtualOS和调度器
+
+	stimer_task_create(app_key_init, app_key_task, APP_KEY_TASK_PERIOD_MS); // 创建按键任务
+
+	stimer_start(); // 启动调度器(死循环)
+
+	return 0;
+}
+```
+
+### 4. 编译烧录后
 当单击，双击，多击，长按按键时，会在串口打印相应的日志信息，效果如下
 ![alt text](image.png)
