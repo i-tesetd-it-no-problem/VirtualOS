@@ -32,14 +32,6 @@
 
 #include "modbus.h"
 
-// 响应码
-#define MODBUS_RESP_SUCCESS 0x00	// 响应成功
-#define MODBUS_RESP_NOT_REPLY 0x01	// 不回复
-#define MODBUS_RESP_ERR_FUNC 0x02	// 功能码错误
-#define MODBUS_RESP_ERR_REG 0x03	// 寄存器地址错误
-#define MODBUS_RESP_ERR_REGNUM 0x04 // 寄存器数量错误
-#define MODBUS_RESP_ERR_OTHER 0x05	// 其他错误
-
 /**
  * @brief 从机接收帧处理
  *
@@ -48,15 +40,14 @@
  * @param reg_num 寄存器数量
  * @param p_in_out 输入输出缓冲
  *
- * @return uint8_t 参考响应码
+ * @return uint8_t 参考modbus.h中的错误码
  */
-typedef uint8_t (*mb_slv_frame_resp)(
-	uint8_t func, uint16_t reg, uint16_t reg_num, uint16_t *p_in_out);
+typedef uint8_t (*mb_slv_frame_resp)(uint8_t func, uint16_t reg, uint16_t reg_num, uint16_t *p_in_out);
 
 // 寄存器区间任务处理
 struct mb_slv_work {
-	uint16_t start; // 起始寄存器
-	uint16_t end; // 结束寄存器, 处理时不包括end, 应该设为实际的结束寄存器+1
+	uint16_t start;			// 起始寄存器
+	uint16_t end;			// 结束寄存器 = 起始寄存器 + 当前区间寄存器长度
 	mb_slv_frame_resp resp; // 响应处理函数
 };
 

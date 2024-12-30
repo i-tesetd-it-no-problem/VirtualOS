@@ -37,11 +37,9 @@
 #define STIMER_TASK_HIT_LIST_MAX (32)
 #define MAX_DEFER_TASK (16)
 
-#define Period_to_Tick(p)                                                                          \
-	(((p) >= STIMER_PERIOD_PER_TICK_MS) ? ((p) / STIMER_PERIOD_PER_TICK_MS) : 1U)
+#define Period_to_Tick(p) (((p) >= STIMER_PERIOD_PER_TICK_MS) ? ((p) / STIMER_PERIOD_PER_TICK_MS) : 1U)
 
 struct stimer_task {
-	stimer_f init_f;
 	stimer_f task_f;
 	uint32_t period;
 	uint32_t arrive;
@@ -91,11 +89,6 @@ static void defer_task_free(struct stimer_task *task)
 	}
 }
 
-static inline int is_task_valid(const struct stimer_task *p_task)
-{
-	return (p_task && p_task->task_f && p_task->period > 0);
-}
-
 static inline void _add_timer(uint32_t period, list_item *item)
 {
 	list_delete_item(item);
@@ -108,7 +101,7 @@ static inline void _add_timer(uint32_t period, list_item *item)
 
 static bool stimer_task_add(struct stimer_task *p_task)
 {
-	if (!is_task_valid(p_task))
+	if (!p_task)
 		return false;
 
 	p_task->arrive = 0;
@@ -119,28 +112,6 @@ static bool stimer_task_add(struct stimer_task *p_task)
 static uint32_t inline stimer_get_tick(void)
 {
 	return m_timer.cur_tick;
-}
-
-static void stimer_dispatch_before(void)
-{
-	struct list_item *cur_item, *next_item;
-	struct stimer_task *task;
-
-	list_for_each_safe(cur_item, next_item, &(m_timer.long_tick_list))
-	{
-		task = container_of(cur_item, struct stimer_task, item);
-		if (task->init_f)
-			task->init_f();
-	}
-
-	for (uint8_t i = 0; i < STIMER_TASK_HIT_LIST_MAX; i++) {
-		list_for_each_safe(cur_item, next_item, &(m_timer.hit_task_list[i]))
-		{
-			task = container_of(cur_item, struct stimer_task, item);
-			if (task->init_f)
-				task->init_f();
-		}
-	}
 }
 
 static void stimer_task_dispatch(void)
@@ -175,7 +146,8 @@ static void stimer_task_dispatch(void)
 	list_for_each_safe(cur_item, next_item, &(m_timer.hit_task_list[idx]))
 	{
 		task = container_of(cur_item, struct stimer_task, item);
-		task->task_f();
+		if (task->task_f)
+			task->task_f();
 		task->arrive = -idx;
 		_add_timer(task->period, &(task->item));
 	}
@@ -184,7 +156,8 @@ static void stimer_task_dispatch(void)
 	{
 		task = container_of(cur_item, struct stimer_task, item);
 		if (++task->arrive >= task->period) {
-			task->task_f();
+			if (task->task_f)
+				task->task_f();
 			list_delete_item(cur_item);
 			defer_task_free(task);
 		}
@@ -214,9 +187,14 @@ bool stimer_init(struct timer_port *port)
 
 bool stimer_task_create(stimer_f init_f, stimer_f task_f, uint32_t period_ms)
 {
+	if (init_f)
+		init_f();
+
+	if (!task_f || !period_ms)
+		return false;
+
 	struct stimer_task *task = (struct stimer_task *)calloc(1, sizeof(struct stimer_task));
 	if (task) {
-		task->init_f = init_f;
 		task->period = Period_to_Tick(period_ms);
 		task->reserved = 1;
 		task->task_f = task_f;
@@ -249,7 +227,6 @@ void stimer_start(void)
 	if (!m_timer.f_start)
 		return;
 
-	stimer_dispatch_before();
 	m_timer.f_start();
 	m_timer.run_flag = 1;
 

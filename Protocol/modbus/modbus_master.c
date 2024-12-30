@@ -44,6 +44,8 @@ enum rx_state {
 	RX_STATE_ADDR = 0, // 从机地址
 	RX_STATE_FUNC,	   // 功能码
 
+	RX_STATE_ERR, // 异常响应
+
 	RX_STATE_DATA_LEN, // 数据长度      (仅对 读 功能玛有效)
 	RX_STATE_DATA,	   // 数据内容      (仅对 读 功能玛有效)
 
@@ -63,6 +65,7 @@ enum rx_state {
 struct msg_info {
 	uint8_t pdu_in;		 // 接收索引
 	uint8_t pdu_len;	 // 接收长度
+	uint8_t err_code;	 // 异常响应码
 	uint16_t cal_crc;	 // 计算的CRC
 	enum rx_state state; // 当前接收状态
 
@@ -111,6 +114,7 @@ static inline size_t get_rx_queue_remain_data(const struct msg_info *p_msg)
 static void rebase_parser(struct msg_info *p_msg)
 {
 	p_msg->state = RX_STATE_ADDR;
+	p_msg->err_code = MODBUS_RESP_ERR_NONE;
 	p_msg->rx_q.rd = p_msg->anchor + 1;
 
 	p_msg->anchor = p_msg->rx_q.rd;
@@ -125,7 +129,6 @@ static void rebase_parser(struct msg_info *p_msg)
 static void flush_parser(struct msg_info *p_msg)
 {
 	p_msg->state = RX_STATE_ADDR;
-
 	p_msg->rx_q.rd = p_msg->forward;
 	p_msg->anchor = p_msg->rx_q.rd;
 }
@@ -151,7 +154,7 @@ static bool check_request_valid(struct mb_mst_request *request)
 		// 写功能码
 
 		// 无数据 数据长度为0 写入寄存器长度超过buffer最大长度
-		if (!request->data || !request->data_len || request->reg_len * 2 > request->data_len)
+		if (!request->write_buf || !request->buf_len || request->reg_len * 2 > request->buf_len)
 			return false;
 
 		break;
@@ -202,8 +205,21 @@ static bool _recv_parser(mb_mst_handle handle)
 				p_msg->pdu_len = MODBUS_REG_BYTES_NUM;
 				p_msg->state = RX_STATE_REG;
 				p_msg->cal_crc = crc16_update(p_msg->cal_crc, c);
+			} else if (c & 0x80) {
+				// 异常响应
+				p_msg->cal_crc = crc16_update(p_msg->cal_crc, c);
+				p_msg->state = RX_STATE_ERR;
+
 			} else
 				rebase_parser(p_msg);
+			break;
+
+		case RX_STATE_ERR:
+			p_msg->err_code = c; // 异常响应码
+			p_msg->pdu_in = 0;
+			p_msg->pdu_len = MODBUS_CRC_BYTES_NUM;
+			p_msg->state = RX_STATE_CRC;
+			p_msg->cal_crc = crc16_update(p_msg->cal_crc, c);
 			break;
 
 		case RX_STATE_DATA_LEN:
@@ -276,9 +292,25 @@ static void _dispatch_rtu_msg(mb_mst_handle handle)
 
 	struct mb_mst_request *request = NULL;
 
-	// 出队请求
-	queue_get(&handle->msg_state.tx_q, (uint8_t *)&request, 1);
-	request->resp(handle->msg_state.r_data, handle->msg_state.r_data_len, false); // 用户回调(未超时)
+	// 无异常响应码
+	if (handle->msg_state.err_code == MODBUS_RESP_ERR_PENDING) {
+		// 设备当前处理不完,  出队再入队到末尾, 后续再请求
+		queue_get(&handle->msg_state.tx_q, (uint8_t *)&request, 1);
+		mb_mst_pdu_request(handle, request);
+	} else if (handle->msg_state.err_code == MODBUS_RESP_ERR_BUSY) {
+		// 设备繁忙 不出对 重置重发数据
+		queue_peek(&handle->msg_state.tx_q, (uint8_t *)&request, 1);
+		request->_hide_[REPEAT_IDX] = 0;  // 重发次数清零
+		request->_hide_[TIMEOUT_IDX] = 0; // 超时次数清零
+	} else {
+		// 正常响应
+		queue_get(&handle->msg_state.tx_q, (uint8_t *)&request, 1);
+	}
+
+	request->resp(handle->msg_state.r_data, handle->msg_state.r_data_len, handle->msg_state.err_code,
+		false); // 正常用户回调(未超时)
+
+	handle->msg_state.err_code = MODBUS_RESP_ERR_NONE; // 异常响应码清零
 }
 
 /**
@@ -326,11 +358,14 @@ static void _request_pdu(mb_mst_handle handle, struct mb_mst_request *request)
 
 	// 写功能玛
 	if (request->func == MODBUS_FUN_WR_REG_MUL) {
-		uint8_t data_len = request->reg_len * 2;
-		temp_buf[idx++] = data_len;
+		temp_buf[idx++] = request->reg_len << 1;
 
-		memcpy(&temp_buf[idx], request->data, data_len);
-		idx += data_len;
+		for (uint8_t i = 0; i < request->reg_len; i++) {
+			temp_buf[idx++] = GET_U8_HIGH_FROM_U16(request->write_buf[i]);
+			temp_buf[idx++] = GET_U8_LOW_FROM_U16(request->write_buf[i]);
+		}
+
+		idx += request->reg_len << 1;
 	}
 
 	uint16_t crc = crc16_update_bytes(0xFFFF, temp_buf, idx);
@@ -341,7 +376,7 @@ static void _request_pdu(mb_mst_handle handle, struct mb_mst_request *request)
 	handle->opts->f_dir_ctrl(modbus_serial_dir_tx_only); // 切换到发送模式
 	handle->opts->f_write(temp_buf, idx);
 
-	if (handle->opts->f_check_send)
+	if (handle->opts->f_check_over)
 		handle->is_sending = true; // DMA发送
 	else
 		handle->opts->f_dir_ctrl(modbus_serial_dir_rx_only); // 轮训发送
@@ -371,7 +406,8 @@ static void master_write(mb_mst_handle handle)
 		// 重发完 才出队
 		request->_hide_[REPEAT_IDX] = 0;
 		queue_get(&handle->msg_state.tx_q, (uint8_t *)&request, 1);
-		request->resp(handle->msg_state.r_data, handle->msg_state.r_data_len, true); // 用户回调(超时)
+		request->resp(
+			handle->msg_state.r_data, handle->msg_state.r_data_len, MODBUS_RESP_ERR_NONE, true); // 用户回调(超时)
 	}
 }
 
@@ -475,8 +511,8 @@ void mb_mst_poll(mb_mst_handle handle)
 		return;
 
 	// 发送中
-	if (handle->opts->f_check_send && handle->is_sending) {
-		bool complete = handle->opts->f_check_send();
+	if (handle->opts->f_check_over && handle->is_sending) {
+		bool complete = handle->opts->f_check_over();
 		if (complete) {
 			handle->is_sending = false;
 			handle->opts->f_dir_ctrl(modbus_serial_dir_rx_only); // 发送完成, 切回接收

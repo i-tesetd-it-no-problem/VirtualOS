@@ -40,25 +40,27 @@
  *
  * @param data 仅对 读 功能码有效  接收到的数据
  * @param len  仅对 读 功能码有效  数据长度
+ * @param err_code  异常响应码 参考modbus.h中的错误码
  * @param is_timeout ture:超时未回复 false:收到回复
  *
  * @return uint8_t 参考响应码
  */
-typedef void (*mb_mst_pdu_resp)(uint8_t *data, size_t len, bool is_timeout);
+typedef void (*mb_mst_pdu_resp)(uint8_t *data, size_t len, uint8_t err_code, bool is_timeout);
 
 // 请求报文 (必须定义为全局变量 运行时再去调整修改成员值)
 struct mb_mst_request {
 	uint16_t _hide_[2]; // 保留数据 用户无需修改
 
 	/* 用户配置区域 */
-	uint32_t timeout_ms;  // 此报文的超时时间
-	uint8_t slave_addr;	  // 从机地址
-	uint8_t func;		  // 功能玛 读:0x03 写:0x10
-	uint16_t reg_addr;	  // 寄存器地址
-	uint8_t reg_len;	  // 寄存器长度
+	uint32_t timeout_ms; // 此报文的超时时间
 
-	uint8_t *data;		  // 数据缓冲 仅对写功能玛有效 (必须定义为全局变量)
-	uint8_t data_len;	  // 缓冲长度
+	uint8_t slave_addr; // 从机地址
+	uint8_t func;		// 功能玛 读:0x03 写:0x10
+	uint16_t reg_addr;	// 寄存器地址
+	uint8_t reg_len;	// 寄存器长度
+
+	uint16_t *write_buf; // 数据缓冲 仅对写功能玛有效 (必须定义为全局变量)
+	uint8_t buf_len;	 // 缓冲长度 仅对写功能玛有效
 
 	mb_mst_pdu_resp resp; // 回复处理
 };

@@ -5,8 +5,28 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+// 当前支持的功能码
 #define MODBUS_FUN_RD_REG_MUL (0x03) // 读功能码
 #define MODBUS_FUN_WR_REG_MUL (0x10) // 写功能码
+
+// 错误码
+#define MODBUS_RESP_ERR_NONE (0x00)		// 无错误
+#define MODBUS_RESP_ERR_FUNC (0x01)		// 功能码错误 例如只读寄存器不能写
+#define MODBUS_RESP_ERR_REG_ADDR (0x02) // 寄存器地址错误
+#define MODBUS_RESP_ERR_DATA (0x03)		// 数据错误
+#define MODBUS_RESP_ERR_DEV (0x04)		// 设备错误
+#define MODBUS_RESP_ERR_PENDING (0x05)	// 正在处理中,不能及时回复,需要主机后续轮询读取
+#define MODBUS_RESP_ERR_BUSY (0x06)		// 设备繁忙, 无法处理
+
+// 一帧最大字节数 256
+#define MODBUS_FRAME_BYTES_MAX (256)
+
+// 校验功能码
+#define MODBUS_FUNC_CHECK_VALID(f) (((f) == MODBUS_FUN_RD_REG_MUL) || ((f) == MODBUS_FUN_WR_REG_MUL))
+
+// 校验寄存器范围
+#define MODBUS_CHECK_REG_RANGE(reg, num, from, to)                                                                     \
+	(((reg) <= (to)) && ((reg) >= (from)) && (num <= MODBUS_REG_NUM_MAX) && (((reg) + (num))) <= (to))
 
 #define MODBUS_REG_NUM_MAX (126) // 最大寄存器数量
 
@@ -15,18 +35,6 @@
 #define MODBUS_REG_BYTES_NUM (2)	 // 寄存器地址字节数
 #define MODBUS_REG_LEN_BYTES_NUM (2) // 寄存器长度字节数
 #define MODBUS_CRC_BYTES_NUM (2)	 // CRC字节数
-
-// 一帧最大字节数 256
-#define MODBUS_FRAME_BYTES_MAX (256)
-
-// 校验功能码
-#define MODBUS_FUNC_CHECK_VALID(f)                                                                 \
-	(((f) == MODBUS_FUN_RD_REG_MUL) || ((f) == MODBUS_FUN_WR_REG_MUL))
-
-// 校验寄存器范围
-#define MODBUS_CHECK_REG_RANGE(reg, num, from, to)                                                 \
-	(((reg) <= (to)) && ((reg) >= (from)) && (num <= MODBUS_REG_NUM_MAX) &&                        \
-		(((reg) + (num) - 1)) <= (to))
 
 #define COMBINE_U8_TO_U16(h, l) ((uint16_t)(h << 8) | (uint16_t)(l))
 #define COMBINE_U16_TO_U32(h, l) ((uint32_t)(h << 16) | (uint32_t)(l))
@@ -55,7 +63,7 @@ typedef bool (*modbus_serial_init)(void);
  * @param len 待写入数据长度
  * @return size_t 实际写入数据长度 失败返回0
  */
-typedef size_t (*modbus_serial_write)(uint8_t *p_data, uint16_t len);
+typedef size_t (*modbus_serial_write)(uint8_t *p_data, size_t len);
 
 /**
  * @brief 串口读函数指针
@@ -64,7 +72,7 @@ typedef size_t (*modbus_serial_write)(uint8_t *p_data, uint16_t len);
  * @param len 待读数据长度
  * @return size_t 实际读入数据长度 失败返回0
  */
-typedef size_t (*modbus_serial_read)(uint8_t *p_data, uint16_t len);
+typedef size_t (*modbus_serial_read)(uint8_t *p_data, size_t len);
 
 /**
  * @brief 串口方向控制函数指针
@@ -81,7 +89,7 @@ typedef void (*modbus_serial_dir_ctrl)(enum modbus_serial_dir ctrl);
  * 
  * @return ture:发送完/可以接收 false:发送中
  */
-typedef bool (*modbus_serial_check_send)(void);
+typedef bool (*modbus_serial_check_over)(void);
 
 // 串口回调
 struct serial_opts {
@@ -89,7 +97,7 @@ struct serial_opts {
 	modbus_serial_write f_write;		   // 串口写函数指针
 	modbus_serial_read f_read;			   // 串口读函数指针
 	modbus_serial_dir_ctrl f_dir_ctrl;	   // 串口方向控制函数指针
-	modbus_serial_check_send f_check_send; // 判断是否发送完成
+	modbus_serial_check_over f_check_over; // 判断是否发送完成
 };
 
 #endif

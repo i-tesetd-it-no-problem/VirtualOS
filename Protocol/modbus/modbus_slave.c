@@ -180,6 +180,11 @@ static uint8_t get_pdu_extern_len(const struct msg_info *p_msg)
 	return len;
 }
 
+static uint8_t check_user_err_code(uint8_t err_code)
+{
+	return (err_code <= MODBUS_RESP_ERR_BUSY ? err_code : MODBUS_RESP_ERR_BUSY);
+}
+
 /**
  * @brief 解析协议数据帧, 支持粘包断包处理
  * 
@@ -273,11 +278,11 @@ static bool _recv_parser(mb_slv_handle handle)
 static uint8_t _rtu_handle(mb_slv_handle handle)
 {
 	if (!handle)
-		return MODBUS_RESP_ERR_OTHER;
+		return MODBUS_RESP_ERR_BUSY;
 
 	struct mb_slv_work *work = NULL; // 注册回调处理
 
-	int res = MODBUS_RESP_ERR_OTHER;
+	int res = MODBUS_RESP_ERR_BUSY;
 
 	uint8_t addr = handle->msg_state.addr;
 	uint8_t func = handle->msg_state.func;
@@ -288,6 +293,9 @@ static uint8_t _rtu_handle(mb_slv_handle handle)
 		work = &handle->work_table[i];
 		if (work && work->resp && MODBUS_CHECK_REG_RANGE(reg, reg_num, work->start, work->end)) {
 			res = work->resp(func, reg, reg_num, handle->data_in_out); // 用户回调处理
+			break;
+		} else {
+			res = MODBUS_RESP_ERR_REG_ADDR; // 地址错误
 			break;
 		}
 	}
@@ -316,7 +324,8 @@ static uint16_t _packet_ack_read_frame(mb_slv_handle handle)
 	uint8_t *pdata_out = handle->modbus_frame_buff; // 存储回复的数据
 
 	pdata_out[pkt_len++] = handle->msg_state.addr;
-	if (_rtu_handle(handle) == MODBUS_RESP_SUCCESS) {
+	uint8_t usr_err = _rtu_handle(handle);
+	if (usr_err == MODBUS_RESP_ERR_NONE) {
 		p = handle->data_in_out; // 用户响应的数据
 
 		pdata_out[pkt_len++] = MODBUS_FUN_RD_REG_MUL; // 读功能码
@@ -326,8 +335,10 @@ static uint16_t _packet_ack_read_frame(mb_slv_handle handle)
 			pdata_out[pkt_len++] = GET_U8_HIGH_FROM_U16(*p);
 			pdata_out[pkt_len++] = GET_U8_LOW_FROM_U16(*p);
 		}
-	} else
-		return 0;
+	} else {
+		pdata_out[pkt_len++] = handle->msg_state.func | 0x80; // 错误帧
+		pdata_out[pkt_len++] = usr_err;
+	}
 
 	crc = crc16_update_bytes(crc, pdata_out, pkt_len);
 
@@ -351,7 +362,7 @@ static uint16_t _packet_ack_write_frame(mb_slv_handle handle)
 	uint16_t pkt_len = 0;
 	uint16_t crc = 0xffff;
 
-	int ret_flag = MODBUS_RESP_ERR_OTHER; // 用户响应结果
+	uint8_t usr_err = MODBUS_RESP_ERR_BUSY; // 用户响应结果
 
 	uint16_t reg = COMBINE_U8_TO_U16(handle->msg_state.pdu.write.reg_h, handle->msg_state.pdu.write.reg_l);
 	uint16_t reg_num = COMBINE_U8_TO_U16(handle->msg_state.pdu.write.num_h, handle->msg_state.pdu.write.num_l);
@@ -362,17 +373,18 @@ static uint16_t _packet_ack_write_frame(mb_slv_handle handle)
 
 	pdata_out[pkt_len++] = handle->msg_state.addr;
 
-	ret_flag = _rtu_handle(handle); // 注册回调处理
-
-	if (ret_flag == MODBUS_RESP_SUCCESS) {
+	usr_err = _rtu_handle(handle); // 注册回调处理
+	if (usr_err == MODBUS_RESP_ERR_NONE) {
 		pdata_out[pkt_len++] = MODBUS_FUN_WR_REG_MUL;
 		pdata_out[pkt_len++] = GET_U8_HIGH_FROM_U16(reg);
 		pdata_out[pkt_len++] = GET_U8_LOW_FROM_U16(reg);
 
 		pdata_out[pkt_len++] = GET_U8_HIGH_FROM_U16(reg_num);
 		pdata_out[pkt_len++] = GET_U8_LOW_FROM_U16(reg_num);
-	} else
-		return 0;
+	} else {
+		pdata_out[pkt_len++] = handle->msg_state.func | 0x80; // 错误帧
+		pdata_out[pkt_len++] = usr_err;
+	}
 
 	crc = crc16_update_bytes(crc, pdata_out, pkt_len);
 	pdata_out[pkt_len++] = GET_U8_LOW_FROM_U16(crc);
@@ -491,8 +503,8 @@ void mb_slv_poll(mb_slv_handle handle)
 		return;
 
 	// DMA才需要检查发送中
-	if (handle->opts->f_check_send && handle->is_sending) {
-		bool complete = handle->opts->f_check_send();
+	if (handle->opts->f_check_over && handle->is_sending) {
+		bool complete = handle->opts->f_check_over();
 		if (complete) {
 			handle->is_sending = false;
 			handle->opts->f_dir_ctrl(modbus_serial_dir_rx_only); // 发送完成, 切回接收
@@ -519,7 +531,7 @@ void mb_slv_poll(mb_slv_handle handle)
 	handle->opts->f_dir_ctrl(modbus_serial_dir_tx_only);
 	handle->opts->f_write(handle->modbus_frame_buff, ptk_len); // 回复主机
 
-	if (handle->opts->f_check_send)
+	if (handle->opts->f_check_over)
 		handle->is_sending = true; // DMA发送
 	else
 		handle->opts->f_dir_ctrl(modbus_serial_dir_rx_only); // 轮训发送

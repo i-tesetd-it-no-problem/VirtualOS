@@ -9,7 +9,7 @@ VirtualOS 是一个基于前后台调度为核心搭建的裸机嵌入式开发�
 - **docs**：框架文档
 - **driver** : 驱动的注册与管理
 - **include** : 框架所有头文件
-- **Plugin**：插件
+- **plugin**：插件
 - **protocol**: 协议
 - **utils**:框架提供的组件
 - **toolchain.cmake**: 交叉编译工具链配置文件
@@ -55,3 +55,5 @@ VirtualOS 是一个基于前后台调度为核心搭建的裸机嵌入式开发�
 1. [新建工程](./docs/new_project/README.md)
 2. [如何使用日志组件](./docs/config_log/README.md)
 3. [如何使用按键组件](./docs/config_btn/README.md)
+4. [如何使用Modbus协议从机组件](./docs/modbus/slave/README.md)
+5. [如何使用Modbus协议主机组件](./docs/modbus/master/README.md)
