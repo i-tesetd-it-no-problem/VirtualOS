@@ -20,8 +20,8 @@
 
 static const char syslog_name[] = "syslog"; /* 确保此设备名唯一 */
 static int syslog_open(struct drv_file *file);
-static size_t syslog_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset);
-static size_t syslog_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset);
+static size_t syslog_read(struct drv_file *file, void *buf, size_t len, size_t *offset);
+static size_t syslog_write(struct drv_file *file, void *buf, size_t len, size_t *offset);
 
 #define SYSLOG_TX_BUF_SIZE (512)
 #define SYSLOG_RX_BUF_SIZE (256)
@@ -65,7 +65,7 @@ static int syslog_ioctl(struct drv_file *file, int cmd, void *arg)
 
 	switch (cmd) {
 	case 0:
-		*(bool *)arg = syslog->tx_over; // 如果是轮询发送则直接返回ture
+		*(bool *)arg = syslog->tx_over;
 		return DRV_ERR_NONE;
 	default:
 		return DRV_ERR_INVALID;
@@ -75,10 +75,10 @@ static int syslog_ioctl(struct drv_file *file, int cmd, void *arg)
 }
 
 // 读数据
-static size_t syslog_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
+static size_t syslog_read(struct drv_file *file, void *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return 0;
+		return DRV_ERR_UNAVAILABLE;
 
 	struct syslog_dev *syslog = file->private; // 初始化的时候已经设置了私有数据这里可以直接拿到
 
@@ -88,7 +88,7 @@ static size_t syslog_read(struct drv_file *file, uint8_t *buf, size_t len, size_
 }
 
 // 写数据
-static size_t syslog_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
+static size_t syslog_write(struct drv_file *file, void *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
 		return DRV_ERR_UNAVAILABLE;

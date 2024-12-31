@@ -250,8 +250,8 @@ static const char led_name[] = "led"; /* 确保此设备名项目中唯一 */
 static int led_open(struct drv_file *file);
 static int led_close(struct drv_file *file);
 static int led_ioctl(struct drv_file *file, int cmd, void *arg);
-static size_t led_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset);
-static size_t led_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset);
+static size_t led_read(struct drv_file *file, void *buf, size_t len, size_t *offset);
+static size_t led_write(struct drv_file *file, void *buf, size_t len, size_t *offset);
 
 static int led_open(struct drv_file *file)
 {
@@ -284,7 +284,7 @@ static int led_ioctl(struct drv_file *file, int cmd, void *arg)
 	return DRV_ERR_NONE;
 }
 
-static size_t led_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
+static size_t led_read(struct drv_file *file, void *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
 		return 0;
@@ -294,7 +294,7 @@ static size_t led_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *
 	return 0; /* 读取成功返回实际读取的字节数 */
 }
 
-static size_t led_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
+static size_t led_write(struct drv_file *file, void *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
 		return 0;

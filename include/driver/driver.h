@@ -30,7 +30,6 @@
 #ifndef __VIRTUAL_OS_DRIVER_H__
 #define __VIRTUAL_OS_DRIVER_H__
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -80,8 +79,8 @@ struct file_operations {
 	int (*open)(struct drv_file *file);						 /* 打开设备 返回结果参考错误码 */
 	int (*close)(struct drv_file *file);					 /* 关闭设备 返回结果参考错误码 */
 	int (*ioctl)(struct drv_file *file, int cmd, void *arg); /* 控制命令 返回结果参考错误码 */
-	size_t (*read)(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset);  /* 读取数据 */
-	size_t (*write)(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset); /* 写入数据 */
+	size_t (*read)(struct drv_file *file, void *buf, size_t len, size_t *offset);  /* 读取数据 */
+	size_t (*write)(struct drv_file *file, void *buf, size_t len, size_t *offset); /* 写入数据 */
 };
 
 // 驱动注册宏

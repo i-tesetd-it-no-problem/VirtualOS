@@ -114,9 +114,10 @@ static inline size_t check_rx_queue_remain_data(const struct msg_info *p_msg)
 }
 
 // 获取队首数据
-static inline size_t get_rx_queue_remain_data(const struct msg_info *p_msg)
+static inline uint8_t get_rx_queue_remain_data(const struct msg_info *p_msg)
 {
-	return (p_msg->rx_q.buf[p_msg->forward & (p_msg->rx_q.buf_size - 1)]);
+	uint8_t *p = p_msg->rx_q.buf;
+	return p[p_msg->forward & (p_msg->rx_q.buf_size - 1)];
 }
 
 /**

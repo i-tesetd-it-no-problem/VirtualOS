@@ -8,8 +8,8 @@ static const char xxx_name[] = "xxx"; /* 确保此设备名项目中唯一 */
 static int xxx_open(struct drv_file *file);
 static int xxx_close(struct drv_file *file);
 static int xxx_ioctl(struct drv_file *file, int cmd, void *arg);
-static size_t xxx_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset);
-static size_t xxx_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset);
+static size_t xxx_read(struct drv_file *file, void *buf, size_t len, size_t *offset);
+static size_t xxx_write(struct drv_file *file, void *buf, size_t len, size_t *offset);
 
 static int xxx_open(struct drv_file *file)
 {
@@ -42,7 +42,7 @@ static int xxx_ioctl(struct drv_file *file, int cmd, void *arg)
 	return DRV_ERR_NONE;
 }
 
-static size_t xxx_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
+static size_t xxx_read(struct drv_file *file, void *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
 		return 0;
@@ -52,7 +52,7 @@ static size_t xxx_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *
 	return 0; /* 读取成功返回实际读取的字节数 */
 }
 
-static size_t xxx_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
+static size_t xxx_write(struct drv_file *file, void *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
 		return 0;

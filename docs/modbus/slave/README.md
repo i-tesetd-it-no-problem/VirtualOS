@@ -34,10 +34,8 @@ struct serial_opts {
 
 static const char rs485_name[] = "rs485"; /* 确保此设备名唯一 */
 static int rs485_open(struct drv_file *file);
-static int rs485_close(struct drv_file *file);
-static int rs485_ioctl(struct drv_file *file, int cmd, void *arg);
-static size_t rs485_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset);
-static size_t rs485_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset);
+static size_t rs485_read(struct drv_file *file, void *buf, size_t len, size_t *offset);
+static size_t rs485_write(struct drv_file *file, void *buf, size_t len, size_t *offset);
 
 #define rs485_TX_BUF_SIZE (512)
 #define rs485_RX_BUF_SIZE (256)
@@ -113,10 +111,10 @@ static int rs485_ioctl(struct drv_file *file, int cmd, void *arg)
 }
 
 // 读数据
-static size_t rs485_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
+static size_t rs485_read(struct drv_file *file, void *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return 0;
+		return DRV_ERR_UNAVAILABLE;
 
 	struct rs485_dev *rs485 = file->private; // 初始化的时候已经设置了私有数据这里可以直接拿到
 
@@ -126,10 +124,10 @@ static size_t rs485_read(struct drv_file *file, uint8_t *buf, size_t len, size_t
 }
 
 // 写数据
-static size_t rs485_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
+static size_t rs485_write(struct drv_file *file, void *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return 0;
+		return DRV_ERR_UNAVAILABLE;
 
 	struct rs485_dev *rs485 = file->private; // 初始化的时候已经设置了私有数据这里可以直接拿到
 
@@ -216,7 +214,8 @@ static bool rs485_driver_init(struct drv_device *dev)
 	rcu_periph_clock_enable(RCU_GPIOB);
 	rcu_periph_clock_enable(RCU_GPIOG);
 
-	gpio_init(GPIOB, GPIO_MODE_AF_OD, GPIO_OSPEED_50MHZ, GPIO_PIN_6); // PB6 发送/收发
+	gpio_init(GPIOB, GPIO_MODE_AF_OD, GPIO_OSPEED_50MHZ, GPIO_PIN_6); // PB6 发送
+	// gpio_init(GPIOB, GPIO_MODE_IN_FLOATING, GPIO_OSPEED_50MHZ, GPIO_PIN_7); // PB7 接收
 	gpio_pin_remap_config(GPIO_USART0_REMAP, ENABLE); // 重映射
 
 	gpio_init(GPIOG, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_15); // PG15 方向控制

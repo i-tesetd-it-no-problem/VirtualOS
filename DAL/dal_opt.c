@@ -28,11 +28,12 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "dal/dal_opt.h"
 
 typedef struct {
 	struct drv_device *dev;
-	uint8_t is_used;
+	bool is_used;
 	size_t offset;
 } fd_t;
 
@@ -42,7 +43,7 @@ static int alloc_fd(void)
 {
 	for (uint16_t i = RESERVED_FDS; i < FD_MAX_SIZE; i++) {
 		if (!fds[i].is_used) {
-			fds[i].is_used = 1;
+			fds[i].is_used = true;
 			return i;
 		}
 	}
@@ -52,7 +53,7 @@ static int alloc_fd(void)
 static void free_fd(int fd)
 {
 	if (fd >= RESERVED_FDS && fd < FD_MAX_SIZE) {
-		fds[fd].is_used = 0;
+		fds[fd].is_used = false;
 		fds[fd].dev = NULL;
 	}
 }
@@ -109,7 +110,7 @@ int dal_close(int fd)
 	return DAL_ERR_NONE;
 }
 
-size_t dal_read(int fd, uint8_t *buf, size_t len)
+size_t dal_read(int fd, void *buf, size_t len)
 {
 	struct drv_device *dev;
 	int err = check_fd(fd, &dev);
@@ -122,7 +123,7 @@ size_t dal_read(int fd, uint8_t *buf, size_t len)
 	return dev->file->opts->read(dev->file, buf, len, &dev->offset);
 }
 
-size_t dal_write(int fd, uint8_t *buf, size_t len)
+size_t dal_write(int fd, void *buf, size_t len)
 {
 	struct drv_device *dev;
 	int err = check_fd(fd, &dev);
@@ -192,7 +193,7 @@ int dal_lseek(int fd, int offset, enum dal_lseek_whence whence)
 void dal_init(void)
 {
 	for (uint16_t i = 0; i < FD_MAX_SIZE; i++) {
-		fds[i].is_used = i < RESERVED_FDS ? 1 : 0;
+		fds[i].is_used = i < RESERVED_FDS ? true : false;
 		fds[i].dev = NULL;
 	}
 }

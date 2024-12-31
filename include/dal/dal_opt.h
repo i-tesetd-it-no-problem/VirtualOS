@@ -30,7 +30,6 @@
 #ifndef _VIRTUAL_OS_DAL_OPT_H
 #define _VIRTUAL_OS_DAL_OPT_H
 
-#include <stdint.h>
 #include <stddef.h>
 #include "driver/driver.h"
 
@@ -69,7 +68,7 @@ int dal_close(int fd);
  * @param len 大小
  * @return size_t 返回实际读取字节数
  */
-size_t dal_read(int fd, uint8_t *buf, size_t len);
+size_t dal_read(int fd, void *buf, size_t len);
 
 /**
  * @brief 向文件写入数据
@@ -79,7 +78,7 @@ size_t dal_read(int fd, uint8_t *buf, size_t len);
  * @param len 大小
  * @return 返回实际写入字节数
  */
-size_t dal_write(int fd, uint8_t *buf, size_t len);
+size_t dal_write(int fd, void *buf, size_t len);
 
 /**
  * @brief 除设备读写以外的操作

@@ -8,6 +8,7 @@
 - 参考代码如下：
 ```c
 #include <stdbool.h>
+#include <stdint.h>
 #include "driver/driver.h" /* 驱动注册头文件 */
 
 #include "gd32f30x.h"
@@ -16,8 +17,8 @@ static const char key_name[] = "key"; /* 确保此设备名项目中唯一 */
 static int key_open(struct drv_file *file);
 static int key_close(struct drv_file *file);
 static int key_ioctl(struct drv_file *file, int cmd, void *arg);
-static size_t key_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset);
-static size_t key_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset);
+static size_t key_read(struct drv_file *file, void *buf, size_t len, size_t *offset);
+static size_t key_write(struct drv_file *file, void *buf, size_t len, size_t *offset);
 
 static int key_open(struct drv_file *file)
 {
@@ -50,31 +51,33 @@ static int key_ioctl(struct drv_file *file, int cmd, void *arg)
 	return DRV_ERR_NONE;
 }
 
-static size_t key_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
+static size_t key_read(struct drv_file *file, void *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return 0;
+		return DRV_ERR_UNAVAILABLE;
+
+	uint8_t *p_buf = buf;
 
 	/* 读取外设数据 */
 	FlagStatus status = gpio_input_bit_get(GPIOE, GPIO_PIN_3); // 读取GPIOE3位状态
 	if (status == RESET)
-		buf[0] = 0;
+		p_buf[0] = 0;
 	else
-		buf[0] = 1;
+		p_buf[0] = 1;
 
 	return 1; /* 读取成功返回实际读取的字节数 */
 }
 
-static size_t key_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
+static size_t key_write(struct drv_file *file, void *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return 0;
+		return DRV_ERR_UNAVAILABLE;
 
 	return 0; /* 写入成功返回实际写入的字节数 */
 }
 
 // 设备操作接口
-static const struct file_operations key_opts = {
+static const struct file_operations key_dev = {
 	.close = key_close,
 	.ioctl = key_ioctl,
 	.open = key_open,
@@ -98,7 +101,7 @@ static bool key_driver_init(struct drv_device *dev)
 EXPORT_DRIVER(key_driver_probe)
 void key_driver_probe(void)
 {
-	driver_register(key_driver_init, &key_opts, key_name); // 调用注册接口
+	driver_register(key_driver_init, &key_dev, key_name); // 调用注册接口
 }
 ```
 
