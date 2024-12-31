@@ -39,7 +39,7 @@ static inline size_t q_min(size_t a, size_t b)
 }
 
 /* 初始化队列 */
-bool queue_init(struct queue_info *q, size_t unit_bytes, uint8_t *buf, size_t units)
+bool queue_init(struct queue_info *q, size_t unit_bytes, void *buf, size_t units)
 {
 	if (!q || !buf || units == 0 || unit_bytes == 0)
 		return false;
@@ -110,7 +110,7 @@ bool is_queue_full(struct queue_info *q)
 }
 
 /* 向队列中添加数据，以单元为单位 */
-size_t queue_add(struct queue_info *q, uint8_t *data, size_t units)
+size_t queue_add(struct queue_info *q, void *data, size_t units)
 {
 	if (!q || !data || units == 0 || is_queue_full(q))
 		return 0;
@@ -133,7 +133,7 @@ size_t queue_add(struct queue_info *q, uint8_t *data, size_t units)
 }
 
 /* 从队列中获取数据，以单元为单位 */
-size_t queue_get(struct queue_info *q, uint8_t *data, size_t units)
+size_t queue_get(struct queue_info *q, void *data, size_t units)
 {
 	if (!q || !data || units == 0 || is_queue_empty(q))
 		return 0;
@@ -155,7 +155,7 @@ size_t queue_get(struct queue_info *q, uint8_t *data, size_t units)
 }
 
 /* 查看队列中的数据，但不移除，以单元为单位 */
-size_t queue_peek(struct queue_info *q, uint8_t *data, size_t units)
+size_t queue_peek(struct queue_info *q, void *data, size_t units)
 {
 	if (!q || !data || units == 0 || is_queue_empty(q))
 		return 0;

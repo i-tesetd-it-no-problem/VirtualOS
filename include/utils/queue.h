@@ -38,7 +38,7 @@
  * @brief 循环队列结构体
  */
 struct queue_info {
-	uint8_t *buf;	   /* 缓冲区 */
+	void *buf;		   /* 缓冲区 */
 	size_t unit_bytes; /* 单元大小(字节数) */
 	size_t buf_size;   /* 缓冲区容量(单位数) */
 	size_t rd;		   /* 读索引 */
@@ -54,7 +54,7 @@ struct queue_info {
  * @param units      缓冲区容量(单元数)
  * @return true 成功,false 失败
  */
-bool queue_init(struct queue_info *q, size_t unit_bytes, uint8_t *buf, size_t units);
+bool queue_init(struct queue_info *q, size_t unit_bytes, void *buf, size_t units);
 
 /**
  * @brief 销毁队列并释放资源
@@ -78,7 +78,7 @@ void queue_reset(struct queue_info *q);
  * @param units 要添加的单元数
  * @return size_t 成功添加的单元数
  */
-size_t queue_add(struct queue_info *q, uint8_t *data, size_t units);
+size_t queue_add(struct queue_info *q, void *data, size_t units);
 
 /**
  * @brief 从队列中获取数据
@@ -88,7 +88,7 @@ size_t queue_add(struct queue_info *q, uint8_t *data, size_t units);
  * @param units 要获取的单元数
  * @return size_t 成功获取的单元数
  */
-size_t queue_get(struct queue_info *q, uint8_t *data, size_t units);
+size_t queue_get(struct queue_info *q, void *data, size_t units);
 
 /**
  * @brief 查看队列中的数据,但不移除
@@ -98,7 +98,7 @@ size_t queue_get(struct queue_info *q, uint8_t *data, size_t units);
  * @param units 要查看的单元数
  * @return size_t 成功查看的单元数
  */
-size_t queue_peek(struct queue_info *q, uint8_t *data, size_t units);
+size_t queue_peek(struct queue_info *q, void *data, size_t units);
 
 /**
  * @brief 判断队列是否为空

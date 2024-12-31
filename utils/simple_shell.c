@@ -309,12 +309,12 @@ bool simple_shell_init(struct sp_shell_opts *opts)
 	if (init_hash_table(&shell_table, SPS_CMD_MAX) != HASH_SUCCESS)
 		return false;
 
-	if (!queue_init(&sps.rx_queue, 1, rx_buffer, RX_QUEUE_SIZE)) {
+	if (!queue_init(&sps.rx_queue, sizeof(uint8_t), rx_buffer, RX_QUEUE_SIZE)) {
 		destroy_hash_table(&shell_table);
 		return false;
 	}
 
-	if (!queue_init(&sps.tx_queue, 1, tx_buffer, TX_QUEUE_SIZE)) {
+	if (!queue_init(&sps.tx_queue, sizeof(uint8_t), tx_buffer, TX_QUEUE_SIZE)) {
 		queue_destroy(&sps.rx_queue);
 		destroy_hash_table(&shell_table);
 		return false;

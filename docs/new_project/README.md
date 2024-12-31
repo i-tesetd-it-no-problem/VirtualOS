@@ -305,7 +305,7 @@ static size_t led_write(struct drv_file *file, uint8_t *buf, size_t len, size_t 
 }
 
 // 设备操作接口
-static const struct file_operations led_dev = {
+static const struct file_operations led_opts = {
 	.close = led_close,
 	.ioctl = led_ioctl,
 	.open = led_open,
@@ -327,7 +327,7 @@ static bool led_driver_init(struct drv_device *dev)
 EXPORT_DRIVER(led_driver_probe)
 void led_driver_probe(void)
 {
-	driver_register(led_driver_init, &led_dev, led_name); // 调用注册接口
+	driver_register(led_driver_init, &led_opts, led_name); // 调用注册接口
 }
 ```
 

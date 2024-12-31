@@ -74,7 +74,7 @@ static size_t key_write(struct drv_file *file, uint8_t *buf, size_t len, size_t 
 }
 
 // 设备操作接口
-static const struct file_operations key_dev = {
+static const struct file_operations key_opts = {
 	.close = key_close,
 	.ioctl = key_ioctl,
 	.open = key_open,
@@ -98,7 +98,7 @@ static bool key_driver_init(struct drv_device *dev)
 EXPORT_DRIVER(key_driver_probe)
 void key_driver_probe(void)
 {
-	driver_register(key_driver_init, &key_dev, key_name); // 调用注册接口
+	driver_register(key_driver_init, &key_opts, key_name); // 调用注册接口
 }
 ```
 
