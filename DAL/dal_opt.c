@@ -28,7 +28,6 @@
  */
 
 #include <stdint.h>
-#include "driver/driver.h"
 #include "dal/dal_opt.h"
 
 typedef struct {

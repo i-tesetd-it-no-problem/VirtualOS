@@ -53,7 +53,7 @@ static int key_ioctl(struct drv_file *file, int cmd, void *arg)
 static size_t key_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return DRV_ERR_UNAVAILABLE;
+		return 0;
 
 	/* 读取外设数据 */
 	FlagStatus status = gpio_input_bit_get(GPIOE, GPIO_PIN_3); // 读取GPIOE3位状态
@@ -68,7 +68,7 @@ static size_t key_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *
 static size_t key_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return DRV_ERR_UNAVAILABLE;
+		return 0;
 
 	return 0; /* 写入成功返回实际写入的字节数 */
 }

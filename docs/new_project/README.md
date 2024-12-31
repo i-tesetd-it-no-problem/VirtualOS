@@ -287,7 +287,7 @@ static int led_ioctl(struct drv_file *file, int cmd, void *arg)
 static size_t led_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return DRV_ERR_UNAVAILABLE;
+		return 0;
 
 	/* 读取外设数据 */
 
@@ -297,7 +297,7 @@ static size_t led_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *
 static size_t led_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return DRV_ERR_UNAVAILABLE;
+		return 0;
 
 	gpio_bit_write(GPIOE, GPIO_PIN_5, (*buf ? SET : RESET));
 

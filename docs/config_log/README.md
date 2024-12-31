@@ -78,7 +78,7 @@ static int syslog_ioctl(struct drv_file *file, int cmd, void *arg)
 static size_t syslog_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return DRV_ERR_UNAVAILABLE;
+		return 0;
 
 	struct syslog_dev *syslog = file->private; // 初始化的时候已经设置了私有数据这里可以直接拿到
 

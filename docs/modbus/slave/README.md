@@ -116,7 +116,7 @@ static int rs485_ioctl(struct drv_file *file, int cmd, void *arg)
 static size_t rs485_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return DRV_ERR_UNAVAILABLE;
+		return 0;
 
 	struct rs485_dev *rs485 = file->private; // 初始化的时候已经设置了私有数据这里可以直接拿到
 
@@ -129,7 +129,7 @@ static size_t rs485_read(struct drv_file *file, uint8_t *buf, size_t len, size_t
 static size_t rs485_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return DRV_ERR_UNAVAILABLE;
+		return 0;
 
 	struct rs485_dev *rs485 = file->private; // 初始化的时候已经设置了私有数据这里可以直接拿到
 

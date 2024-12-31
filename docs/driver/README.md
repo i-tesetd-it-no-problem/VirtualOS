@@ -45,7 +45,7 @@ static int xxx_ioctl(struct drv_file *file, int cmd, void *arg)
 static size_t xxx_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return DRV_ERR_UNAVAILABLE;
+		return 0;
 
 	/* 读取外设数据 */
 
@@ -55,13 +55,13 @@ static size_t xxx_read(struct drv_file *file, uint8_t *buf, size_t len, size_t *
 static size_t xxx_write(struct drv_file *file, uint8_t *buf, size_t len, size_t *offset)
 {
 	if (!file->is_opened)
-		return DRV_ERR_UNAVAILABLE;
+		return 0;
 
-	return 1; /* 写入成功返回实际写入的字节数 */
+	return 0; /* 写入成功返回实际写入的字节数 */
 }
 
 // 设备操作接口
-static const struct file_operations xxx_dev = {
+static const struct file_operations xxx_opts = {
 	.close = xxx_close,
 	.ioctl = xxx_ioctl,
 	.open = xxx_open,
@@ -81,6 +81,6 @@ static bool xxx_driver_init(struct drv_device *dev)
 EXPORT_DRIVER(xxx_driver_probe)
 void xxx_driver_probe(void)
 {
-	driver_register(xxx_driver_init, &xxx_dev, xxx_name); // 调用注册接口
+	driver_register(xxx_driver_init, &xxx_opts, xxx_name); // 调用注册接口
 }
 ```

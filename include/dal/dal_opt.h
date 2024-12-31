@@ -32,23 +32,24 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "driver/driver.h"
 
-#define RESERVED_FDS (3) /* 前三个文件描述符为内部保留值 */
-#define FD_MAX_SIZE (64) /* 文件描述符最大数量 */
+#define RESERVED_FDS (3)		   /* 前三个文件描述符为内部保留值 */
+#define FD_MAX_SIZE MAX_DEVICE_NUM /* 文件描述符最大数量 */
 
 #define DAL_ERR_NONE (0)		 /* 无错误 */
 #define DAL_ERR_INVALID (-1)	 /* 无效参数 */
 #define DAL_ERR_OVERFLOW (-2)	 /* 超过最大设备数量 */
 #define DAL_ERR_UNAVAILABLE (-3) /* 设备不可用 例如未打开 */
-#define DAL_ERR_EXCEPTION (-4) /* 操作异常，例如对只读设备进行写操作,空指针等 */
-#define DAL_ERR_OCCUPIED (-5)  /* 设备被占用 */
-#define DAL_ERR_NOT_EXIST (-6) /* 设备不存在 */
+#define DAL_ERR_EXCEPTION (-4)	 /* 操作异常，例如对只读设备进行写操作,空指针等 */
+#define DAL_ERR_OCCUPIED (-5)	 /* 设备被占用 */
+#define DAL_ERR_NOT_EXIST (-6)	 /* 设备不存在 */
 
 /**
  * @brief 打开文件
  * 
  * @param file_name 驱动注册提供的文件名
- * @return int 成功返回>=3的文件描述符 失败参考错误码
+ * @return int 成功返回>0的文件描述符 失败参考错误码
  */
 int dal_open(const char *file_name);
 
@@ -92,7 +93,7 @@ int dal_ioctl(int fd, int cmd, void *arg);
 
 enum dal_lseek_whence {
 	DAL_LSEEK_WHENCE_HEAD, /* 基准点为文件头部 */
-	DAL_LSEEK_WHENCE_SET, /* 基准点为当前位置 */
+	DAL_LSEEK_WHENCE_SET,  /* 基准点为当前位置 */
 	DAL_LSEEK_WHENCE_TAIL, /* 基准点为文件末尾 */
 };
 
