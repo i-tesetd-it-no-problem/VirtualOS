@@ -58,3 +58,4 @@ VirtualOS 是一个基于前后台调度为核心搭建的裸机嵌入式开发�
 4. [如何使用Modbus协议从机组件](./docs/modbus/slave/README.md)
 5. [如何使用Modbus协议主机组件](./docs/modbus/master/README.md)
 6. [如何编写CAN驱动与应用](./docs/CAN/README.md)
+7. [如何编写存储设备驱动与应用](./docs/eeprom/README.md)

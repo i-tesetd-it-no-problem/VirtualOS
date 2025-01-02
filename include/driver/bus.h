@@ -31,5 +31,6 @@
 #define __VIRTUAL_OS_BUS_H__
 
 #include "driver/can_bus.h"
+#include "driver/iic_bus.h"
 
 #endif /* __VIRTUAL_OS_BUS_H__ */

@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "dal/dal_opt.h"
+#include "utils/string_hash.h"
 
 typedef struct {
 	struct drv_device *dev;
@@ -120,7 +121,13 @@ size_t dal_read(int fd, void *buf, size_t len)
 	if (!dev->file->opts->read)
 		return DAL_ERR_EXCEPTION;
 
-	return dev->file->opts->read(dev->file, buf, len, &dev->offset);
+	size_t real_len = len;
+
+	// 如果初始化驱动时设置了设备大小，则防止溢出
+	if (dev->dev_size > 0)
+		real_len = ((dev->dev_size - dev->offset) < len) ? (dev->dev_size - dev->offset) : len;
+
+	return dev->file->opts->read(dev->file, buf, real_len, &dev->offset);
 }
 
 size_t dal_write(int fd, void *buf, size_t len)
@@ -133,7 +140,13 @@ size_t dal_write(int fd, void *buf, size_t len)
 	if (!dev->file->opts->write)
 		return DAL_ERR_EXCEPTION;
 
-	return dev->file->opts->write(dev->file, buf, len, &dev->offset);
+	size_t real_len = len;
+
+	// 如果初始化驱动时设置了设备大小，则防止溢出
+	if (dev->dev_size > 0)
+		real_len = ((dev->dev_size - dev->offset) < len) ? (dev->dev_size - dev->offset) : len;
+
+	return dev->file->opts->write(dev->file, buf, real_len, &dev->offset);
 }
 
 int dal_ioctl(int fd, int cmd, void *arg)
@@ -153,7 +166,7 @@ int dal_lseek(int fd, int offset, enum dal_lseek_whence whence)
 {
 	struct drv_device *dev;
 	int err = check_fd(fd, &dev);
-	if (err != DAL_ERR_NONE)
+	if (err != DAL_ERR_NONE || dev->dev_size == 0)
 		return err;
 
 	uint32_t cur_offset = dev->offset; // 当前偏移
