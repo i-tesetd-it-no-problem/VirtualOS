@@ -469,5 +469,31 @@ void app_eeprom_task(void)
 }
 ```
 
-3. 运行结果
+## 3. 添加到工程
+ - 在主函数中创建测试任务
+```c
+#include <stdint.h>
+#include <stddef.h>
+
+#include "utils/stimer.h"
+
+#include "systick.h"
+
+#include "app_log.h"
+#include "app_eeprom.h"
+
+int main(void)
+{
+	app_system_init(); // 初始化VirtualOS和调度器
+
+	stimer_task_create(app_log_init, app_log_task, APP_LOG_TASK_PERIOD_MS); // 创建日志任务
+	stimer_task_create(app_eeprom_init, app_eeprom_task, APP_EEPROM_TASK_PERIOD_MS); // EEPROM 测试代码
+
+	stimer_start(); // 启动调度器(死循环)
+
+	return 0;
+}
+```
+
+## 4. 运行结果
 ![alt text](image.png)
