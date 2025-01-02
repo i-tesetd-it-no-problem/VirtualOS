@@ -30,9 +30,9 @@
 #ifndef __VIRTUAL_OS_CAN_BUS_H__
 #define __VIRTUAL_OS_CAN_BUS_H__
 
-#define CAN_MAX_DLEN 8
-
 #include <stdint.h>
+
+#define CAN_MAX_DLEN 8
 
 /*
  * 控制器局域网 (CAN) 标识符结构
