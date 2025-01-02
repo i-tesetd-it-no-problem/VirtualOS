@@ -64,44 +64,40 @@ struct pdu_write {
 
 // 接收数据信息
 struct msg_info {
+	uint8_t rx_queue_buff[RX_BUFF_SIZE]; // 接收队列缓冲
+	union {
+		struct pdu_read read;
+		struct pdu_write write;
+		uint8_t data[MODBUS_FRAME_BYTES_MAX];
+	} pdu;					// 数据帧
+	struct queue_info rx_q; // 接收队列
+
+	size_t anchor;	// 滑动左窗口
+	size_t forward; // 滑动右窗口
+
+	uint16_t cal_crc; // 计算的CRC
+
 	uint8_t addr; // 从机地址
 	uint8_t func; // 功能码
 
 	uint8_t pdu_in;	 // 接收索引
 	uint8_t pdu_len; // 接收长度
 
-	uint16_t cal_crc; // 计算的CRC
-
 	enum rx_state state; // 当前接收状态
-
-	size_t anchor;	// 滑动左窗口
-	size_t forward; // 滑动右窗口
-
-	struct queue_info rx_q;				 // 接收队列
-	uint8_t rx_queue_buff[RX_BUFF_SIZE]; // 接收队列缓冲
-
-	union {
-		struct pdu_read read;
-		struct pdu_write write;
-		uint8_t data[MODBUS_FRAME_BYTES_MAX];
-	} pdu; // 数据帧
 };
 
 // 从机
 struct mb_slv {
-	uint8_t slave_addr;		  // 从机地址
-	struct serial_opts *opts; // 回调指针
-
-	uint16_t data_in_out[MODBUS_REG_NUM_MAX]; // 用户交互缓冲
-
-	bool is_sending; // 正在发送
-
-	struct msg_info msg_state; // 接收信息
-
+	struct msg_info msg_state;						   // 接收信息
 	uint8_t modbus_frame_buff[MODBUS_FRAME_BYTES_MAX]; // 回复缓冲
+	uint16_t data_in_out[MODBUS_REG_NUM_MAX];		   // 用户交互缓冲
 
+	struct serial_opts *opts;		// 回调指针
 	struct mb_slv_work *work_table; // 响应处理表
 	size_t table_num;				// 响应处理表数量
+
+	uint8_t slave_addr; // 从机地址
+	bool is_sending;	// 正在发送
 };
 
 static bool _recv_parser(mb_slv_handle handle);			 // 解析数据

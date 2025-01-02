@@ -52,17 +52,15 @@ struct mb_mst_request {
 	uint16_t _hide_[2]; // 保留数据 用户无需修改
 
 	/* 用户配置区域 */
-	uint32_t timeout_ms; // 此报文的超时时间
+	uint16_t reg_addr;	  // 寄存器地址
+	uint16_t *write_buf;  // 数据缓冲 仅对写功能玛有效 (必须定义为全局变量)
+	uint32_t timeout_ms;  // 此报文的超时时间
+	mb_mst_pdu_resp resp; // 回复处理
 
 	uint8_t slave_addr; // 从机地址
 	uint8_t func;		// 功能玛 读:0x03 写:0x10
-	uint16_t reg_addr;	// 寄存器地址
+	uint8_t buf_len;	// 缓冲长度 仅对写功能玛有效
 	uint8_t reg_len;	// 寄存器长度
-
-	uint16_t *write_buf; // 数据缓冲 仅对写功能玛有效 (必须定义为全局变量)
-	uint8_t buf_len;	 // 缓冲长度 仅对写功能玛有效
-
-	mb_mst_pdu_resp resp; // 回复处理
 };
 
 // 主机句柄

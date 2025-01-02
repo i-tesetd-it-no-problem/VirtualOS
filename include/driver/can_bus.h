@@ -44,17 +44,17 @@
  */
 typedef uint32_t canid_t;
 
-#define CAN_STANDARD_ID_MASK 0x000007FF /* CAN 标准帧标识符掩码 */
-#define CAN_EXTENDED_ID_MASK 0x1FFFFFFF /* CAN 扩展帧标识符掩码 */
-#define CAN_ERR_FLAG 0x20000000			/* 错误帧标志 */
-#define CAN_RTR_FLAG 0x40000000			/* 远程请求帧标志 */
-#define CAN_EXT_FLAG 0x80000000			/* 扩展帧标志 */
+#define CAN_STANDARD_ID_MASK 0x000007FF // CAN 标准帧标识符掩码
+#define CAN_EXTENDED_ID_MASK 0x1FFFFFFF // CAN 扩展帧标识符掩码
+#define CAN_ERR_FLAG 0x20000000			// 错误帧标志
+#define CAN_RTR_FLAG 0x40000000			// 远程请求帧标志
+#define CAN_EXT_FLAG 0x80000000			// 扩展帧标志
 
 // CAN帧
 struct can_frame {
-	canid_t can_id;
-	uint8_t can_dlc; /* 数据长度 */
-	uint8_t data[CAN_MAX_DLEN];
+	uint8_t data[CAN_MAX_DLEN]; // 数据内容
+	canid_t can_id;				// CAN ID + 帧类型
+	uint8_t can_dlc;			// 数据长度
 };
 
 #endif /* __VIRTUAL_OS_CAN_BUS_H__ */

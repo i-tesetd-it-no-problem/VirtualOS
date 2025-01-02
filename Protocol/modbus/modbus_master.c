@@ -63,24 +63,25 @@ enum rx_state {
 
 // 接收数据信息
 struct msg_info {
-	uint8_t pdu_in;		 // 接收索引
-	uint8_t pdu_len;	 // 接收长度
-	uint8_t err_code;	 // 异常响应码
-	uint16_t cal_crc;	 // 计算的CRC
-	enum rx_state state; // 当前接收状态
+	uint8_t rx_queue_buff[RX_BUFF_SIZE];	// 接收队列缓冲
+	uint8_t r_data[MODBUS_REG_NUM_MAX * 2]; // 读功能码接收的有效数据
+	uint8_t tx_queue_buff[REQUEST_BUFFER];	// 发送队列缓冲
+
+	struct queue_info rx_q; // 接收队列
+	struct queue_info tx_q; // 发送队列
 
 	size_t anchor;	// 滑动左窗口
 	size_t forward; // 滑动右窗口
 
-	struct queue_info rx_q;				 // 接收队列
-	uint8_t rx_queue_buff[RX_BUFF_SIZE]; // 接收队列缓冲
-
-	struct queue_info tx_q;				   // 发送队列
-	uint8_t tx_queue_buff[REQUEST_BUFFER]; // 发送队列缓冲
-
+	uint16_t cal_crc;						// 计算的CRC
 	uint8_t recv_crc[MODBUS_CRC_BYTES_NUM]; // 接收的CRC
-	uint8_t r_data[MODBUS_REG_NUM_MAX * 2]; // 读功能码接收的有效数据
-	uint8_t r_data_len;						// 有效数据长度
+
+	uint8_t pdu_in;		// 接收索引
+	uint8_t pdu_len;	// 接收长度
+	uint8_t err_code;	// 异常响应码
+	uint8_t r_data_len; // 有效数据长度
+
+	enum rx_state state; // 当前接收状态
 };
 
 // 主机句柄
