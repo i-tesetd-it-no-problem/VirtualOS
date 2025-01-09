@@ -28,6 +28,7 @@
  */
 
 #include "utils/crc.h"
+#include "utils/log.h"
 #include "utils/queue.h"
 #include "protocol/modbus/modbus_slave.h"
 #include <stdint.h>
@@ -90,7 +91,7 @@ struct msg_info {
 struct mb_slv {
 	struct msg_info msg_state;						   // 接收信息
 	uint8_t modbus_frame_buff[MODBUS_FRAME_BYTES_MAX]; // 回复缓冲
-	uint16_t data_in_out[MODBUS_REG_NUM_MAX];		   // 用户交互缓冲
+	uint16_t data_in_out[MAX_READ_REG_NUM];			   // 用户交互缓冲
 
 	struct serial_opts *opts;		// 回调指针
 	struct mb_slv_work *work_table; // 响应处理表
@@ -288,11 +289,8 @@ static uint8_t _rtu_handle(mb_slv_handle handle)
 
 	for (uint16_t i = 0; i < handle->table_num; i++) {
 		work = &handle->work_table[i];
-		if (work && work->resp && MODBUS_CHECK_REG_RANGE(reg, reg_num, work->start, work->end)) {
+		if (work && work->resp && MODBUS_CHECK_REG_RANGE(reg, reg_num, work->start, work->end, func)) {
 			res = work->resp(func, reg, reg_num, handle->data_in_out); // 用户回调处理
-			break;
-		} else {
-			res = MODBUS_RESP_ERR_REG_ADDR; // 地址错误
 			break;
 		}
 	}

@@ -51,7 +51,7 @@ VirtualOS 是一个基于前后台调度为核心搭建的裸机嵌入式开发�
 
 确保 CMake、Ninja 的 bin 目录都已经加入系统的 Path 环境变量中。
 
-## 使用说明
+## 使用说明(全案例以GD32F303芯片为例)
 1. [新建工程](./docs/new_project/README.md)
 2. [如何使用日志组件](./docs/config_log/README.md)
 3. [如何使用按键组件](./docs/config_btn/README.md)

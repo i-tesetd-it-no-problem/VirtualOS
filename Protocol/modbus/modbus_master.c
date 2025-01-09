@@ -64,7 +64,7 @@ enum rx_state {
 // 接收数据信息
 struct msg_info {
 	uint8_t rx_queue_buff[RX_BUFF_SIZE];	// 接收队列缓冲
-	uint8_t r_data[MODBUS_REG_NUM_MAX * 2]; // 读功能码接收的有效数据
+	uint8_t r_data[MAX_READ_REG_NUM * 2]; // 读功能码接收的有效数据
 	uint8_t tx_queue_buff[REQUEST_BUFFER];	// 发送队列缓冲
 
 	struct queue_info rx_q; // 接收队列
@@ -145,7 +145,7 @@ static void flush_parser(struct msg_info *p_msg)
 static bool check_request_valid(struct mb_mst_request *request)
 {
 	// 空指针 无响应回调 寄存器范围过大 未设置超时时间
-	if (!request || !request->resp || request->reg_len > MODBUS_REG_NUM_MAX || !request->timeout_ms)
+	if (!request || !request->resp || CHECK_REG_NUM_VALID(request->reg_len, request->func) || !request->timeout_ms)
 		return false;
 
 	switch (request->func) {

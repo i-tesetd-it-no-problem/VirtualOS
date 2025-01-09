@@ -60,7 +60,7 @@ typedef enum {
 enum q_reserve_signal {
 	Q_EMPTY_SIG = (qsignal_t)0,
 	Q_ENTRY_SIG,
-	Q_EXTI_SIG,
+	Q_EXIT_SIG,
 	Q_INIT_SIG,
 
 	/*自定义信号区域*/
@@ -82,5 +82,5 @@ void qfsm_init(qfsm_t *me, qstate_handler f_initial, qevent_t const *e);
  * @param me 状态机实例
  * @param e 事件
  */
-void qfsm_dispatch(qfsm_t *const me, qevent_t const *e);
+void qfsm_dispatch(qfsm_t * const me, qevent_t const *e);
 #endif /*_VIRTUAL_OS_QFSM_H*/

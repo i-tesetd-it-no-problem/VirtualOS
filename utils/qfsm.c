@@ -32,7 +32,7 @@
 static const qevent_t q_reserve_ev[] = {
 	{ (qsignal_t)Q_EMPTY_SIG },
 	{ (qsignal_t)Q_ENTRY_SIG },
-	{ (qsignal_t)Q_EXTI_SIG },
+	{ (qsignal_t)Q_EXIT_SIG },
 	{ (qsignal_t)Q_INIT_SIG },
 };
 
@@ -50,7 +50,7 @@ void qfsm_dispatch(qfsm_t *const me, qevent_t const *e)
 	r = (*s)(me, e);
 
 	if (r == Q_EVENT_TRAN) {
-		(void)(*s)(me, &q_reserve_ev[Q_EXTI_SIG]);
+		(void)(*s)(me, &q_reserve_ev[Q_EXIT_SIG]);
 		(void)(*me->state)(me, &q_reserve_ev[Q_ENTRY_SIG]);
 	}
 }

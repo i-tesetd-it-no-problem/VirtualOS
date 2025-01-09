@@ -24,11 +24,18 @@
 // 校验功能码
 #define MODBUS_FUNC_CHECK_VALID(f) (((f) == MODBUS_FUN_RD_REG_MUL) || ((f) == MODBUS_FUN_WR_REG_MUL))
 
-// 校验寄存器范围
-#define MODBUS_CHECK_REG_RANGE(reg, num, from, to)                                                                     \
-	(((reg) <= (to)) && ((reg) >= (from)) && (num <= MODBUS_REG_NUM_MAX) && (((reg) + (num))) <= (to))
+#define MAX_READ_REG_NUM (125)	// 最大读寄存器数量
+#define MAX_WRITE_REG_NUM (123) // 最大写寄存器数量
 
-#define MODBUS_REG_NUM_MAX (126) // 最大寄存器数量
+// 检查寄存器数量
+#define CHECK_REG_NUM_VALID(reg_num, func)                                                                             \
+	(((func) == MODBUS_FUN_RD_REG_MUL)                                                                                 \
+			? ((reg_num) <= MAX_READ_REG_NUM)                                                                          \
+			: (((func) == MODBUS_FUN_WR_REG_MUL) ? ((reg_num) <= MAX_WRITE_REG_NUM) : false))
+
+// 校验寄存器范围
+#define MODBUS_CHECK_REG_RANGE(reg, num, from, to, func)                                                               \
+	(((reg) < (to)) && ((reg) >= (from)) && CHECK_REG_NUM_VALID((num), (func)) && (((reg) + (num)) <= (to)))
 
 #define MODBUS_ADDR_BYTES_NUM (1)	 // 地址字节数
 #define MODBUS_FUNC_BYTES_NUM (1)	 // 功能码字节数
