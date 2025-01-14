@@ -145,7 +145,7 @@ static void flush_parser(struct msg_info *p_msg)
 static bool check_request_valid(struct mb_mst_request *request)
 {
 	// 空指针 无响应回调 寄存器范围过大 未设置超时时间
-	if (!request || !request->resp || CHECK_REG_NUM_VALID(request->reg_len, request->func) || !request->timeout_ms)
+	if (!request || !request->resp || !CHECK_REG_NUM_VALID(request->reg_len, request->func) || !request->timeout_ms)
 		return false;
 
 	switch (request->func) {

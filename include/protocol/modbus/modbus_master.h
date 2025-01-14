@@ -42,8 +42,6 @@
  * @param len  仅对 读 功能码有效  数据长度
  * @param err_code  异常响应码 参考modbus.h中的错误码
  * @param is_timeout ture:超时未回复 false:收到回复
- *
- * @return uint8_t 参考响应码
  */
 typedef void (*mb_mst_pdu_resp)(uint8_t *data, size_t len, uint8_t err_code, bool is_timeout);
 
