@@ -1,7 +1,9 @@
 # 如何编写CAN应用与驱动
 
 ## 1. CAN帧定义
- - 在`include/driver/can_bus.h`中定义了标准CAN帧结构体，如下所示
+
+- 在`include/driver/can_bus.h`中定义了标准CAN帧结构体，如下所示
+
 ```c
 #define CAN_MAX_DLEN 8
 
@@ -28,12 +30,15 @@ struct can_frame {
 	uint8_t can_dlc;			// 数据长度
 };
 ```
- - 应用层调用读写接口时，只需要填充/解析`can_frame`结构体即可，驱动中也需要根据平台情况填充/解析CAN帧结构体。
+
+- 应用层调用读写接口时，只需要填充/解析`can_frame`结构体即可，驱动中也需要根据平台情况填充/解析CAN帧结构体。
 
 ## 2. 驱动编写
+
 - 在项目自己新建的驱动文件中新建驱动文件， 如`can_driver.c`
 - 参考[驱动模板](../driver/README.md)的编写方法
 - 参考代码如下：
+
 ```c
 #include <stdbool.h>
 #include <stdint.h>
@@ -286,12 +291,14 @@ void can_driver_probe(void)
 ```
 
 ## 3. 编写应用层代码
- - 在`app/src`文件夹中新建文件,如 `app_can.c`
- - 在`app/inc`文件夹中新建文件,如 `app_can.h`
- - 编写了串口驱动后，即可使用`VirtualOS/dal/dal_opt.h`中提供的接口,其中的每个
-   接口都与驱动的`struct file_operations`一一对应
- - 使用框架定义的CAN帧进行收发
- - 参考代码如下：
+
+- 在`app/src`文件夹中新建文件,如 `app_can.c`
+- 在`app/inc`文件夹中新建文件,如 `app_can.h`
+- 编写了串口驱动后，即可使用`VirtualOS/dal/dal_opt.h`中提供的接口,其中的每个
+接口都与驱动的`struct file_operations`一一对应
+- 使用框架定义的CAN帧进行收发
+- 参考代码如下：
+
 ```c
 // app_can.h
 #ifndef __APP_CAN_H__
@@ -376,7 +383,8 @@ void app_can_task(void)
 ```
 
 ## 4. 在主函数中创建日志任务
- - 参考代码如下
+
+- 参考代码如下
 
 ```c
 #include <stdint.h>
@@ -402,6 +410,7 @@ int main(void)
 ```
 
 ## 实验结果
- - 实现现象为只打印了CAN帧ID为0x1B0和0x1BF的帧，0X2B0的帧没有打印，不符合过滤器的设置。
- - 如图所示:
+
+- 实现现象为只打印了CAN帧ID为0x1B0和0x1BF的帧，0X2B0的帧没有打印，不符合过滤器的设置。
+- 如图所示:
 ![alt text](image.png)

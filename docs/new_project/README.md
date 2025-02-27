@@ -1,31 +1,37 @@
 # 点灯案例, 以GD32F30x芯片为例(重新更新于2024-12-26)
 
 ## 1. 从[GD官网](https://www.gd32mcu.com/cn/download/7?kw=GD32F3)中下载SDK，并找到GD32F30x的路径
+
 ![alt text](image.png)
 ![alt text](image-1.png)
 
 ## 2. 新建文件夹(以gd32f30x为例)
- - 拷贝框架源码`VirtualOS`文件夹到该文件夹下
- - 新建`app`文件夹，未来在此添加应用代码，复制SDK中的头文件(inc)和源文件(src)
- - 将启动文件也复制到`app/src`文件夹下
- - 新建`driver`文件夹，未来在此添加驱动代码
- - 新建`config`文件夹存放配置文件，例如链接文件和openocd配置文件
- - 新建`CMakeLists.txt`文件，用于编写项目构建配置
- - 最终效果如图所示：
+
+- 拷贝框架源码`VirtualOS`文件夹到该文件夹下
+- 新建`app`文件夹，未来在此添加应用代码，复制SDK中的头文件(inc)和源文件(src)
+- 将启动文件也复制到`app/src`文件夹下
+- 新建`driver`文件夹，未来在此添加驱动代码
+- 新建`config`文件夹存放配置文件，例如链接文件和openocd配置文件
+- 新建`CMakeLists.txt`文件，用于编写项目构建配置
+- 最终效果如图所示：
 ![alt text](image-2.png)
 
 ## 3. 删除官方案例代码
- - 清空`main.c`文件
- - 删除图中两个文件`gd32f307c_eval.c/h`
+
+- 清空`main.c`文件
+- 删除图中两个文件`gd32f307c_eval.c/h`
 ![alt text](image-3.png)
 
 ## 4. 修改交叉编译器路径
- - 修改`VirtualOS/toolchain.cmake`中的编译器根路径为自己本地路径(首页已指定了下载链接)，如图所示：
+
+- 修改`VirtualOS/toolchain.cmake`中的编译器根路径为自己本地路径(首页已指定了下载链接)，如图所示：
 ![alt text](image-4.png)
   
 ## 5. 修改CMakeLists.txt文件
- - 关键修改部分已经用```!!!```标注，其他部分可以不用修改, 请勿随意修改配置顺序, 实际使用时请根据自己的项目修改
- - 具体参考代码如下所示:
+
+- 关键修改部分已经用```!!!```标注，其他部分可以不用修改, 请勿随意修改配置顺序, 实际使用时请根据自己的项目修改
+- 具体参考代码如下所示:
+
 ```CMakeLists.txt
 cmake_minimum_required(VERSION 3.21) # cmake 版本
 
@@ -112,9 +118,11 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 ```
 
 ## 6. 给框架提供调度定时器
- - 以使用`systick`为例，修改`app/src/systick.c`和`app/inc/systick.h`文件，具体参考代码如下所示:
- - 核心在于调用`virtual_os_init`函数，使框架可以依据提供的定时器进行定时计数调度
- - 注意删除中断文件`gd32f30x_it.c`中的`SysTick_Handler`函数，我们会在此文件重写
+
+- 以使用`systick`为例，修改`app/src/systick.c`和`app/inc/systick.h`文件，具体参考代码如下所示:
+- 核心在于调用`virtual_os_init`函数，使框架可以依据提供的定时器进行定时计数调度
+- 注意删除中断文件`gd32f30x_it.c`中的`SysTick_Handler`函数，我们会在此文件重写
+
 ```c
 // systick.h
 
@@ -227,6 +235,7 @@ void delay_one_tick(uint32_t tick)
 ```
 
 - 在mian.c中调用`app_system_init()`初始化`VirtualOS`和调度器
+
 ```c
 #include "systick.h"
 
@@ -237,9 +246,11 @@ int main(void)
 ```
 
 ## 7. 编写LED驱动代码
- - 在新建的driver文件中新建文件,如 `led_driver.c`
- - 参考[驱动编写模板](../driver/README.md)
- - 修改后的代码如下所示
+
+- 在新建的driver文件中新建文件,如 `led_driver.c`
+- 参考[驱动编写模板](../driver/README.md)
+- 修改后的代码如下所示
+
 ```c
 #include <stdbool.h>
 #include "driver/driver.h" /* 驱动注册头文件 */
@@ -332,11 +343,13 @@ void led_driver_probe(void)
 ```
 
 ## 8. 编写LED应用代码
- - 在`app/src`文件夹中新建文件,如 `app_led.c`
- - 在`app/inc`文件夹中新建文件,如 `app_led.h`
- - 编写了LED驱动后，即可使用`VirtualOS/dal/dal_opt.h`中提供的接口,其中的每个
-   接口都与驱动的`struct file_operations`一一对应
- - 参考代码如下
+
+- 在`app/src`文件夹中新建文件,如 `app_led.c`
+- 在`app/inc`文件夹中新建文件,如 `app_led.h`
+- 编写了LED驱动后，即可使用`VirtualOS/dal/dal_opt.h`中提供的接口,其中的每个
+接口都与驱动的`struct file_operations`一一对应
+- 参考代码如下
+
 ```c
 // app_led.h
 #ifndef _APP_LED_H
@@ -375,8 +388,10 @@ void app_led_task(void)
 ```
 
 ## 9. 编写main.c文件
- - 编写main.c文件，在main函数中调用接口创建LED任务
- - 参考代码如下
+
+- 编写main.c文件，在main函数中调用接口创建LED任务
+- 参考代码如下
+
 ```c
 #include <stdint.h>
 
@@ -398,29 +413,33 @@ int main(void)
 ```
 
 ## 10. 编译运行
-1. 启动终端, 执行如下命令
- - `cmake -B build -S . -G Ninja`
- - -B build 代表新建构建文件夹为build
- - -S . 代表CMakeLists.txt文件在当前目录
- - -G Ninja 代表使用Ninja作为构建工具
- - 成功效果如下
+
+1.启动终端, 执行如下命令
+
+- `cmake -B build -S . -G Ninja`
+- -B build 代表新建构建文件夹为build
+- -S . 代表CMakeLists.txt文件在当前目录
+- -G Ninja 代表使用Ninja作为构建工具
+- 成功效果如下
 ![alt text](image-5.png)
 
-2. 编译运行
- - cmake --build build
- - --build 为编译命令 后面跟着编译文件夹名
- - 该命令会编译整个工程将编译生成的可执行文件拷贝到build目录下的output文件夹中(output在CMakeLists.txt中已经)
- - 最终编译成功结果如下
+2.编译运行
+
+- cmake --build build
+- --build 为编译命令 后面跟着编译文件夹名
+- 该命令会编译整个工程将编译生成的可执行文件拷贝到build目录下的output文件夹中(output在CMakeLists.txt中已经)
+- 最终编译成功结果如下
 ![alt text](image-9.png)
 
- - 以下为`GD32F30x`需要额外修改的地方，其他平台以及芯片类型请自行根据错误修改
- - 当前工程直接编译会出错, 修改需要修改官方SDK中的`gd32f30x.h`文件, 添加一个宏定义
+- 以下为`GD32F30x`需要额外修改的地方，其他平台以及芯片类型请自行根据错误修改
+- 当前工程直接编译会出错, 修改需要修改官方SDK中的`gd32f30x.h`文件, 添加一个宏定义
 ![alt text](image-6.png)
- - 修改官方的链接文件`gd32f30x_flash.ld`的芯片FLASH与RAM定义，如下所示
+- 修改官方的链接文件`gd32f30x_flash.ld`的芯片FLASH与RAM定义，如下所示
 ![alt text](image-7.png)
- - 将最下面的栈定义替换如下所示
+- 将最下面的栈定义替换如下所示
 ![alt text](image-8.png)
- - 最终文件为如下所示
+- 最终文件为如下所示
+
 ```ld
 /* memory map */
 MEMORY
@@ -546,13 +565,16 @@ SECTIONS
  /* input sections */
 GROUP(libgcc.a libc.a libm.a libnosys.a)
 ```
+
 - 最终编译成功结果如下
 ![alt text](image-9.png)
 
 ## 11. 设置快捷编译
- - 在根路径下新建.vscode文件夹
- - 在.vscode文件夹下新建`tasks.json`文件
- - 写入如下内容
+
+- 在根路径下新建.vscode文件夹
+- 在.vscode文件夹下新建`tasks.json`文件
+- 写入如下内容
+
 ```json
 {
     "version": "2.0.0",
@@ -582,9 +604,11 @@ GROUP(libgcc.a libc.a libm.a libnosys.a)
 ## 12. 下载运行结果
 
 1. 使用OpenOCD
- - 在根路径下新建.vscode文件夹
- - 在.vscode文件夹下新建`launch.json`文件
- - 写入如下内容
+
+- 在根路径下新建.vscode文件夹
+- 在.vscode文件夹下新建`launch.json`文件
+- 写入如下内容
+
 ```json
 {
     "version": "0.2.0",
@@ -615,10 +639,12 @@ GROUP(libgcc.a libc.a libm.a libnosys.a)
   }
 ```
 
-2. 使用Jlink
- - 在根路径下新建.vscode文件夹
- - 在.vscode文件夹下新建`launch.json`文件
- - 写入如下内容
+2.使用Jlink
+
+- 在根路径下新建.vscode文件夹
+- 在.vscode文件夹下新建`launch.json`文件
+- 写入如下内容
+
 ```json
 {
     "version": "0.2.0",

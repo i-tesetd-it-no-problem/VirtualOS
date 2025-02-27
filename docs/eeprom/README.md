@@ -1,15 +1,18 @@
 # 如何利用EEPROM使用文件偏移操作
 
 ## 介绍
+
 - 在驱动中，读写接口都有一个文件偏移参数，该参数用于表示从存储设备的当前位置进行读写。
 - 用户编写驱动接口时无需自行计算偏移，只需要在读写结束后更新文件偏移参数即可。
 - 实际的文件偏移参数由框架自行管理，而当用户需要手动控制偏移时，需要调用`dal/dal_opts`中的`int dal_lseek`接口
 - 记住每次应用层读写之后，文件偏移都会增加进行对应的读写长度
 
 ## 1. EEPROM驱动示例
+
 - 在项目自己新建的驱动文件中新建驱动文件， 如`i2c_driver.c`
 - 参考[驱动模板](../driver/README.md)的编写方法
 - 参考代码如下：
+
 ```c
 #include <stdbool.h>
 #include <stdint.h>
@@ -399,15 +402,17 @@ void i2c1_driver_probe(void)
 	driver_register(i2c1_driver_init, &i2c1_opts, i2c1_name); // 调用注册接口
 }
 ```
- - 当前驱动的关键在于读写完成之后需要更新偏移`*offset += len;`且初始化时需要设置设备大小`dev->dev_size = EEPROM_SIZE;`
- - 存储设备以外的设备不需要显示设置设备大小，读写接口中也不必在意`offset`参数
+
+- 当前驱动的关键在于读写完成之后需要更新偏移`*offset += len;`且初始化时需要设置设备大小`dev->dev_size = EEPROM_SIZE;`
+- 存储设备以外的设备不需要显示设置设备大小，读写接口中也不必在意`offset`参数
 
 ## 2. 编写应用代码
- - 在`app/src`文件夹中新建文件,如 `app_eeprom.c`
- - 在`app/inc`文件夹中新建文件,如 `app_eeprom.h`
- - 编写了串口驱动后，即可使用`VirtualOS/dal/dal_opt.h`中提供的接口,其中的每个
-   接口都与驱动的`struct file_operations`一一对应
- - 编写应用代码如下:
+
+- 在`app/src`文件夹中新建文件,如 `app_eeprom.c`
+- 在`app/inc`文件夹中新建文件,如 `app_eeprom.h`
+- 编写了串口驱动后，即可使用`VirtualOS/dal/dal_opt.h`中提供的接口,其中的每个
+接口都与驱动的`struct file_operations`一一对应
+- 编写应用代码如下:
 
 ```c
 // app_eeprom.h
@@ -470,7 +475,9 @@ void app_eeprom_task(void)
 ```
 
 ## 3. 添加到工程
- - 在主函数中创建测试任务
+
+- 在主函数中创建测试任务
+
 ```c
 #include <stdint.h>
 #include <stddef.h>
@@ -496,4 +503,5 @@ int main(void)
 ```
 
 ## 4. 运行结果
+
 ![alt text](image.png)

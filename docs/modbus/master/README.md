@@ -1,13 +1,16 @@
 # 注意
+
 协议组件部分已修改，去除了发送完成判断 以下文档内容不完全正确 (后续会修改)
 由于大部分485芯片接收到串口数据后传输时需要一定时间，即，串口(或DMA)传输完成判断时，并不就是485芯片传输完成时，因此协议去除了切换发送/接收引脚的逻辑，这部分需要用户根据实际情况编写切换，可以调用`utils/stimer`组件中的 `defer_task_create`接口，在串口发送完成时，动态添加一次延时任务切换发送接收引脚
 
-# 如何使用Modbus主机协议组件
- - 本框架已提供了标准Modbus协议组件源码，在protocol/modbus/modbus_master.c中
- - 此协议不和应用逻辑和任何平台(包括本框架)耦合,只需提供对应的注册回调即可使用
- - 只需使用协议提供的四个接口即可完成从机的功能实现，如图所示
+## 如何使用Modbus主机协议组件
+
+- 本框架已提供了标准Modbus协议组件源码，在protocol/modbus/modbus_master.c中
+- 此协议不和应用逻辑和任何平台(包括本框架)耦合,只需提供对应的注册回调即可使用
+- 只需使用协议提供的四个接口即可完成从机的功能实现，如图所示
 ![alt text](image.png)
- - 串口回调指针定义如下
+- 串口回调指针定义如下
+
 ```c
 struct serial_opts {
 	modbus_serial_init f_init;			   // 串口初始化函数指针
@@ -17,14 +20,17 @@ struct serial_opts {
 	modbus_serial_check_send f_check_over; // 判断是否发送完成
 };
 ```
- - 请求结构体定义如下
+
+- 请求结构体定义如下
 ![alt text](image-1.png)
 
 ## 1. 485串口驱动编写
+
 - 在项目自己新建的驱动文件中新建驱动文件， 如`rs485_driver.c`
 - 参考[驱动模板](../driver/README.md)的编写方法
 - 本案例使用DMA+串口作为底层发送方式(注: 当前由于开发板的设计特殊，在硬件上使用单线进行485总线收发，请根据自己实际情况修改)
 - 参考代码如下：
+
 ```c
 #include <stdbool.h>
 #include <stdint.h>
@@ -280,12 +286,14 @@ void rs485_driver_probe(void)
 ```
 
 ## 2. RS485应用代码编写
- - 在`app/src`文件夹中新建文件,如 `app_rs485_slave.c`
- - 在`app/inc`文件夹中新建文件,如 `app_rs485_slave.h`
- - 编写了串口驱动后，即可使用`VirtualOS/dal/dal_opt.h`中提供的接口,其中的每个
-   接口都与驱动的`struct file_operations`一一对应
- - 该应用案例中具体的协议定义参考[自定义协议](../self_protocol.md)
- - 参考代码如下：
+
+- 在`app/src`文件夹中新建文件,如 `app_rs485_slave.c`
+- 在`app/inc`文件夹中新建文件,如 `app_rs485_slave.h`
+- 编写了串口驱动后，即可使用`VirtualOS/dal/dal_opt.h`中提供的接口,其中的每个
+接口都与驱动的`struct file_operations`一一对应
+- 该应用案例中具体的协议定义参考[自定义协议](../self_protocol.md)
+- 参考代码如下：
+
 ```c
 // app_rs485_master.c
 
@@ -506,7 +514,9 @@ void app_rs485_master_task(void)
 ```
 
 ### 3. 在主函数中创建日志任务
- - 参考代码如下
+
+- 参考代码如下
+
 ```c
 #include <stdint.h>
 #include <stddef.h>

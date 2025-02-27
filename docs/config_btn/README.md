@@ -3,9 +3,11 @@
 ## 使用本框架提供的按键组件，无死延时消抖，支持单击，双击，多击，长按
 
 1. 编写按键驱动代码，即IO读取的驱动
+
 - 在项目自己新建的驱动文件中新建驱动文件， 如`key_driver.c`
 - 参考[驱动模板](../driver/README.md)的编写方法
 - 参考代码如下：
+
 ```c
 #include <stdbool.h>
 #include <stdint.h>
@@ -106,11 +108,13 @@ void key_driver_probe(void)
 ```
 
 ### 2. 编写按键的应用代码
- - 在`app/src`文件夹中新建文件,如 `app_key.c`
- - 在`app/inc`文件夹中新建文件,如 `app_key.h`
- - 编写了按键驱动后，即可使用`VirtualOS/dal/dal_opt.h`中提供的接口,其中的每个
-   接口都与驱动的`struct file_operations`一一对应
- - 参考代码如下
+
+- 在`app/src`文件夹中新建文件,如 `app_key.c`
+- 在`app/inc`文件夹中新建文件,如 `app_key.h`
+- 编写了按键驱动后，即可使用`VirtualOS/dal/dal_opt.h`中提供的接口,其中的每个
+接口都与驱动的`struct file_operations`一一对应
+- 参考代码如下
+
 ```c
 // app_key.h
 
@@ -203,7 +207,9 @@ void app_key_task(void)
 ```
 
 ### 3. 新建按键任务
- - 在main函数中新建任务，参考代码如下
+
+- 在main函数中新建任务，参考代码如下
+
 ```c
 #include <stdint.h>
 #include <stddef.h>
@@ -227,5 +233,6 @@ int main(void)
 ```
 
 ### 4. 编译烧录后
+
 当单击，双击，多击，长按按键时，会在串口打印相应的日志信息，效果如下
 ![alt text](image.png)
