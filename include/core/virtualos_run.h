@@ -38,4 +38,5 @@
  * @param port 时钟配置
  */
 void virtual_os_init(struct timer_port *port);
+
 #endif /* _VIRTUAL_OS_H_ */

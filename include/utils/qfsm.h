@@ -47,11 +47,11 @@ struct qfsmtag {
 	qstate_handler state;
 };
 
-typedef enum {
+enum q_event_result {
 	Q_EVENT_HANDLED = (qstate)0,
 	Q_EVENT_IGNORED,
 	Q_EVENT_TRAN,
-} Q_EVENT_RESULT_E;
+};
 
 #define Q_HANDLED() (Q_EVENT_HANDLED)
 #define Q_IGNORED() (Q_EVENT_IGNORED)

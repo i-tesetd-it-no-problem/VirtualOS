@@ -35,9 +35,9 @@
 #include "utils/list.h"
 
 enum hash_error {
-	HASH_KEY_NOT_FOUND = -2, //键不存在
-	HASH_POINT_ERROR,		 //指针错误
-	HASH_SUCCESS,			 //无错误
+	HASH_KEY_NOT_FOUND = -2, // 键不存在
+	HASH_POINT_ERROR,		 // 指针错误
+	HASH_SUCCESS,			 // 无错误
 };
 
 struct string_hash_node {

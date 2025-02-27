@@ -30,7 +30,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "dal/dal_opt.h"
-#include "utils/string_hash.h"
 
 typedef struct {
 	struct drv_device *dev;
@@ -61,7 +60,10 @@ static void free_fd(int fd)
 
 static int check_fd(int fd, struct drv_device **dev)
 {
-	if (fd < RESERVED_FDS || fd >= FD_MAX_SIZE || !fds[fd].is_used || !dev)
+	if (fd < RESERVED_FDS || fd >= FD_MAX_SIZE || !fds[fd].is_used)
+		return DAL_ERR_INVALID;
+
+	if (!dev)
 		return DAL_ERR_INVALID;
 
 	*dev = fds[fd].dev;
@@ -78,7 +80,7 @@ int dal_open(const char *node_name)
 	if (new_fd == DAL_ERR_OVERFLOW)
 		return DAL_ERR_OVERFLOW;
 
-	if (!dev || !dev->file || !dev->file->opts->open) {
+	if (!dev->file || !dev->file->opts->open) {
 		free_fd(new_fd);
 		return DAL_ERR_EXCEPTION;
 	}
@@ -169,25 +171,25 @@ int dal_lseek(int fd, int offset, enum dal_lseek_whence whence)
 	if (err != DAL_ERR_NONE || dev->dev_size == 0)
 		return err;
 
-	uint32_t cur_offset = dev->offset; // 当前偏移
-	uint32_t dev_size = dev->dev_size; // 设备大小
-	uint32_t dest_offset = 0;		   // 目标偏移
+	uint32_t cur_offset = dev->offset;
+	uint32_t dev_size = dev->dev_size;
+	uint32_t dest_offset = 0;
 
 	switch (whence) {
-	case DAL_LSEEK_WHENCE_HEAD: /* 从文件头开始 */
+	case DAL_LSEEK_WHENCE_HEAD:
 		if (offset < 0)
 			return DRV_ERR_INVALID;
 
 		dest_offset = (uint32_t)offset;
 		break;
 
-	case DAL_LSEEK_WHENCE_SET: /* 从当前位置开始 */
+	case DAL_LSEEK_WHENCE_SET:
 		dest_offset = cur_offset + offset;
 		if (dest_offset > dev_size)
-			return DRV_ERR_INVALID; // 超出设备范围
+			return DRV_ERR_INVALID;
 		break;
 
-	case DAL_LSEEK_WHENCE_TAIL: /* 从文件尾部开始 */
+	case DAL_LSEEK_WHENCE_TAIL:
 		dest_offset = dev_size + offset;
 		if (dest_offset > dev_size)
 			return DRV_ERR_INVALID;

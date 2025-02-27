@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include "utils/string_hash.h"
 #include "driver/driver.h"
+#include "core/virtual_assert.h"
 
 static struct hash_table driver_table = { 0 };
 
@@ -39,11 +40,7 @@ static struct hash_table driver_table = { 0 };
  */
 void driver_manage_init(void)
 {
-	enum hash_error err = HASH_POINT_ERROR;
-
-	err = init_hash_table(&driver_table, MAX_DEVICE_NUM);
-	if (err != HASH_SUCCESS)
-		return;
+	virtual_os_assert(init_hash_table(&driver_table, MAX_DEVICE_NUM) == HASH_SUCCESS);
 }
 
 /**

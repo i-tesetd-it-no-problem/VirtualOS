@@ -98,7 +98,6 @@ struct mb_slv {
 	size_t table_num;				// 响应处理表数量
 
 	uint8_t slave_addr; // 从机地址
-	bool is_sending;	// 正在发送
 };
 
 static bool _recv_parser(mb_slv_handle handle);			 // 解析数据
@@ -444,7 +443,7 @@ mb_slv_handle mb_slv_init(
 {
 	bool ret = false;
 
-	if (!opts || !opts->f_init || !opts->f_read || !opts->f_write || !opts->f_dir_ctrl)
+	if (!opts || !opts->f_init || !opts->f_read || !opts->f_write)
 		return NULL;
 
 	struct mb_slv *handle = calloc(1, sizeof(struct mb_slv));
@@ -455,7 +454,6 @@ mb_slv_handle mb_slv_init(
 	handle->work_table = work_table;
 	handle->table_num = table_num;
 	handle->slave_addr = slv_addr;
-	handle->is_sending = false;
 
 	ret = queue_init(&handle->msg_state.rx_q, sizeof(uint8_t), handle->msg_state.rx_queue_buff, RX_BUFF_SIZE);
 	if (!ret) {
@@ -468,8 +466,6 @@ mb_slv_handle mb_slv_init(
 		free(handle);
 		return NULL;
 	}
-
-	opts->f_dir_ctrl(modbus_serial_dir_rx_only);
 
 	return handle;
 }
@@ -497,16 +493,6 @@ void mb_slv_poll(mb_slv_handle handle)
 	if (!handle)
 		return;
 
-	// DMA才需要检查发送中
-	if (handle->opts->f_check_over && handle->is_sending) {
-		bool complete = handle->opts->f_check_over();
-		if (complete) {
-			handle->is_sending = false;
-			handle->opts->f_dir_ctrl(modbus_serial_dir_rx_only); // 发送完成, 切回接收
-		}
-		return;
-	}
-
 	size_t ptk_len = handle->opts->f_read(handle->modbus_frame_buff, MODBUS_FRAME_BYTES_MAX);
 	if (!ptk_len) // 无数据
 		return;
@@ -523,11 +509,5 @@ void mb_slv_poll(mb_slv_handle handle)
 	if (!ptk_len)
 		return; // 无回复数据
 
-	handle->opts->f_dir_ctrl(modbus_serial_dir_tx_only);
 	handle->opts->f_write(handle->modbus_frame_buff, ptk_len); // 回复主机
-
-	if (handle->opts->f_check_over)
-		handle->is_sending = true; // DMA发送
-	else
-		handle->opts->f_dir_ctrl(modbus_serial_dir_rx_only); // 轮训发送
 }

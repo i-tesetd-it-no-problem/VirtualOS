@@ -27,33 +27,34 @@
  * 
  */
 
+#include <stdint.h>
+
 #include "driver/driver.h"
 #include "core/virtualos_run.h"
-#include <stdint.h>
+#include "core/virtual_assert.h"
 
 extern void dal_init(void);
 
-// 驱动初始化
 extern void (*__start_early_driver[])(void);
 extern void (*__stop_early_driver[])(void);
 
 static void register_drivers(void)
 {
-	void (**driver)(void) = __start_early_driver;
-	while (driver < __stop_early_driver) {
-		if (*driver)
-			(*driver)();
-		driver++;
+	size_t driver_count = __stop_early_driver - __start_early_driver;
+
+	for (size_t i = 0; i < driver_count; i++) {
+		if (__start_early_driver[i])
+			__start_early_driver[i]();
 	}
 }
 
 void virtual_os_init(struct timer_port *port)
 {
-	driver_manage_init(); /* 初始化驱动管理 */
+	driver_manage_init();
 
-	register_drivers(); /* 注册所有驱动 */
+	register_drivers();
 
-	dal_init(); /* 初始化应用层接口 */
+	dal_init();
 
-	stimer_init(port); /* 初始化调度定时器 */
+	virtual_os_assert(stimer_init(port));
 }

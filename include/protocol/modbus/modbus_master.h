@@ -31,6 +31,7 @@
 #define _MODBUS_MASTER_H_
 
 #include "modbus.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 #define MASTER_REPEATS (3) // 超时未回复重发3次
@@ -45,19 +46,14 @@
  */
 typedef void (*mb_mst_pdu_resp)(uint8_t *data, size_t len, uint8_t err_code, bool is_timeout);
 
-// 请求报文 (必须定义为全局变量 运行时再去调整修改成员值)
+// 请求报文
 struct mb_mst_request {
-	uint16_t _hide_[2]; // 保留数据 用户无需修改
-
-	/* 用户配置区域 */
-	uint16_t reg_addr;	  // 寄存器地址
-	uint16_t *write_buf;  // 数据缓冲 仅对写功能玛有效 (必须定义为全局变量)
 	uint32_t timeout_ms;  // 此报文的超时时间
-	mb_mst_pdu_resp resp; // 回复处理
+	mb_mst_pdu_resp resp; // 回复处理 不需要处理回复可为空, 如写功能码
 
 	uint8_t slave_addr; // 从机地址
 	uint8_t func;		// 功能玛 读:0x03 写:0x10
-	uint8_t buf_len;	// 缓冲长度 仅对写功能玛有效
+	uint16_t reg_addr;	// 寄存器地址
 	uint8_t reg_len;	// 寄存器长度
 };
 
@@ -88,11 +84,13 @@ void mb_mst_destroy(mb_mst_handle handle);
 void mb_mst_poll(mb_mst_handle handle);
 
 /**
- * @brief 主机发送报文
+ * @brief 
  * 
  * @param handle 主机句柄
- * @param request 请求结构体
+ * @param request 请求包
+ * @param reg_data 寄存器数据 仅在request的功能码为写请求时有效
+ * @param reg_len 寄存器长度 仅在request的功能码为写请求时有效
  */
-void mb_mst_pdu_request(mb_mst_handle handle, struct mb_mst_request *request);
+void mb_mst_pdu_request(mb_mst_handle handle, struct mb_mst_request *request, uint16_t *reg_data, uint8_t reg_len);
 
 #endif

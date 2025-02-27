@@ -82,13 +82,6 @@ typedef size_t (*modbus_serial_write)(uint8_t *p_data, size_t len);
 typedef size_t (*modbus_serial_read)(uint8_t *p_data, size_t len);
 
 /**
- * @brief 串口方向控制函数指针
- *
- * @param ctrl 串口方向控制
- */
-typedef void (*modbus_serial_dir_ctrl)(enum modbus_serial_dir ctrl);
-
-/**
  * @brief 检查是否发送完成
  * 
  * 如果是轮训发送可直接设置为NULL
@@ -100,11 +93,9 @@ typedef bool (*modbus_serial_check_over)(void);
 
 // 串口回调
 struct serial_opts {
-	modbus_serial_init f_init;			   // 串口初始化函数指针
-	modbus_serial_write f_write;		   // 串口写函数指针
-	modbus_serial_read f_read;			   // 串口读函数指针
-	modbus_serial_dir_ctrl f_dir_ctrl;	   // 串口方向控制函数指针
-	modbus_serial_check_over f_check_over; // 判断是否发送完成
+	modbus_serial_init f_init;	 // 串口初始化函数指针
+	modbus_serial_write f_write; // 串口写函数指针
+	modbus_serial_read f_read;	 // 串口读函数指针
 };
 
 #endif
