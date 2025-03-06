@@ -31,6 +31,7 @@
 #include "utils/string_hash.h"
 #include "driver/driver.h"
 #include "core/virtual_assert.h"
+#include "core/virtualos_config.h"
 
 static struct hash_table driver_table = { 0 };
 
@@ -40,7 +41,7 @@ static struct hash_table driver_table = { 0 };
  */
 void driver_manage_init(void)
 {
-	virtual_os_assert(init_hash_table(&driver_table, MAX_DEVICE_NUM) == HASH_SUCCESS);
+	virtual_os_assert(init_hash_table(&driver_table, VIRTUALOS_MAX_DEV) == HASH_SUCCESS);
 }
 
 /**

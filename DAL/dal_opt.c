@@ -30,6 +30,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "dal/dal_opt.h"
+#include "driver/driver.h"
+#include "core/virtualos_config.h"
+
+#define FD_MAX_SIZE (VIRTUALOS_MAX_DEV + RESERVED_FDS)
 
 typedef struct {
 	struct drv_device *dev;

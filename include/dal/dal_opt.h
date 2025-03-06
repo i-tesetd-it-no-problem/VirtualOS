@@ -31,10 +31,8 @@
 #define _VIRTUAL_OS_DAL_OPT_H
 
 #include <stddef.h>
-#include "driver/driver.h"
 
-#define RESERVED_FDS (3)		   /* 前三个文件描述符为内部保留值 */
-#define FD_MAX_SIZE MAX_DEVICE_NUM /* 文件描述符最大数量 */
+#define RESERVED_FDS (3) /* 前三个文件描述符为内部保留值 */
 
 #define DAL_ERR_NONE (0)		 /* 无错误 */
 #define DAL_ERR_INVALID (-1)	 /* 无效参数 */

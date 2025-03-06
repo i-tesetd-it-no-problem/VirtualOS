@@ -1,7 +1,7 @@
 /**
- * @file virtual_assert.h
+ * @file virtualos_config.h
  * @author wenshuyu (wsy2161826815@163.com)
- * @brief 断言宏定义
+ * @brief 框架配置
  * @version 1.0
  * @date 2025-03-04
  * 
@@ -27,15 +27,17 @@
  * 
  */
 
-#ifndef _VIRTUAL_ASSERT_H_
-#define _VIRTUAL_ASSERT_H_
+#ifndef  __VIRTUALOS_CONFIG_H__
+#define  __VIRTUALOS_CONFIG_H__
 
-#define virtual_os_assert(cond)                                                                                        \
-	do {                                                                                                               \
-		if (!(cond)) {                                                                                                 \
-			while (1)                                                                                                  \
-				;                                                                                                      \
-		}                                                                                                              \
-	} while (0)
+/**
+* @brief 
+* 
+* 请在编译静态库之前修改此文件的宏定义
+* 在编译静态库后修改此文件的宏定义将不会生效
+* 
+*/
 
-#endif /* _VIRTUAL_ASSERT_H_ */
+#define VIRTUALOS_MAX_DEV (10) /* 最大设备数量 同时用于驱动数量以及文件描述符的数量 */
+
+#endif /* __VIRTUALOS_CONFIG_H__ */

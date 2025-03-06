@@ -33,8 +33,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define MAX_DEVICE_NUM (32) /* 最大设备数量 */
-
 #define DRV_ERR_NONE (0)		 /* 无错误 */
 #define DRV_ERR_INVALID (-1)	 /* 无效参数 */
 #define DRV_ERR_OVERFLOW (-2)	 /* 超过最大设备数量 */
