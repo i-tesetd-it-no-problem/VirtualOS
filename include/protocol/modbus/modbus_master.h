@@ -5,7 +5,10 @@
  * @version 1.0
  * @date 2024-12-18
  * 
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
+ * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,14 +30,14 @@
  * 
  */
 
-#ifndef _MODBUS_MASTER_H_
-#define _MODBUS_MASTER_H_
+#ifndef __VIRTUAL_OS_MODBUS_MASTER_H__
+#define __VIRTUAL_OS_MODBUS_MASTER_H__
 
 #include "modbus.h"
 #include <stdbool.h>
 #include <stdint.h>
 
-#define MASTER_REPEATS (3) // 超时未回复重发3次
+#define MASTER_REPEATS (3) // 重发次数
 
 /**
  * @brief 主机接收帧处理
@@ -93,4 +96,4 @@ void mb_mst_poll(mb_mst_handle handle);
  */
 void mb_mst_pdu_request(mb_mst_handle handle, struct mb_mst_request *request, uint16_t *reg_data, uint8_t reg_len);
 
-#endif
+#endif /* __VIRTUAL_OS_MODBUS_MASTER_H__ */

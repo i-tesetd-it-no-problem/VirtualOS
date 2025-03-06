@@ -5,6 +5,9 @@
  * @version 1.0
  * @date 2024-08-20
  * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
  * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy

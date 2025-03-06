@@ -5,6 +5,9 @@
  * @version 1.0
  * @date 2024-08-12
  * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
  * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,14 +30,12 @@
  * 
  */
 
-#ifndef _VIRTUAL_OS_DAL_OPT_H
-#define _VIRTUAL_OS_DAL_OPT_H
+#ifndef __VIRTUAL_OS_DAL_OPT_H__
+#define __VIRTUAL_OS_DAL_OPT_H__
 
 #include <stddef.h>
-#include "driver/driver.h"
 
-#define RESERVED_FDS (3)		   /* 前三个文件描述符为内部保留值 */
-#define FD_MAX_SIZE MAX_DEVICE_NUM /* 文件描述符最大数量 */
+#define RESERVED_FDS (3) /* 前三个文件描述符为内部保留值 */
 
 #define DAL_ERR_NONE (0)		 /* 无错误 */
 #define DAL_ERR_INVALID (-1)	 /* 无效参数 */
@@ -48,7 +49,7 @@
  * @brief 打开文件
  * 
  * @param file_name 驱动注册提供的文件名
- * @return int 成功返回>0的文件描述符 失败参考错误码
+ * @return int 成功返回大于0的文件描述符 失败参考错误码
  */
 int dal_open(const char *file_name);
 
@@ -61,7 +62,7 @@ int dal_open(const char *file_name);
 int dal_close(int fd);
 
 /**
- * @brief 从文件读取数据
+ * @brief 从文件读取数据，读取成功后将增加文件偏移量
  * 
  * @param fd 文件描述符
  * @param buf 读缓冲区
@@ -71,7 +72,7 @@ int dal_close(int fd);
 size_t dal_read(int fd, void *buf, size_t len);
 
 /**
- * @brief 向文件写入数据
+ * @brief 向文件写入数据， 写入成功后将增加文件偏移量
  * 
  * @param fd 文件描述符
  * @param buf 写缓冲区
@@ -81,7 +82,7 @@ size_t dal_read(int fd, void *buf, size_t len);
 size_t dal_write(int fd, void *buf, size_t len);
 
 /**
- * @brief 除设备读写以外的操作
+ * @brief 设备控制指令，除设备读写以外的操作，cmd参考对应驱动定义
  * 
  * @param fd 文件描述符
  * @param cmd 操作命令
@@ -91,13 +92,13 @@ size_t dal_write(int fd, void *buf, size_t len);
 int dal_ioctl(int fd, int cmd, void *arg);
 
 enum dal_lseek_whence {
-	DAL_LSEEK_WHENCE_HEAD, /* 基准点为文件头部 */
-	DAL_LSEEK_WHENCE_SET,  /* 基准点为当前位置 */
-	DAL_LSEEK_WHENCE_TAIL, /* 基准点为文件末尾 */
+	DAL_LSEEK_WHENCE_HEAD, /* 指向文件头部 */
+	DAL_LSEEK_WHENCE_SET,  /* 指向当前位置 */
+	DAL_LSEEK_WHENCE_TAIL, /* 指向文件末尾 */
 };
 
 /**
- * @brief 修改文件指针偏移(例如读写FLASH需要不断修改地址偏移)
+ * @brief 修改文件指针偏移
  * 
  * @param fd 文件描述符
  * @param offset 偏移大小
@@ -106,4 +107,4 @@ enum dal_lseek_whence {
  */
 int dal_lseek(int fd, int offset, enum dal_lseek_whence whence);
 
-#endif /*_VIRTUAL_OS_DAL_OPT_H*/
+#endif /* __VIRTUAL_OS_DAL_OPT_H__ */

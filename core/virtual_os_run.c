@@ -1,9 +1,12 @@
 /**
- * @file virtualos_run.h
+ * @file virtual_os_run.c
  * @author wenshuyu (wsy2161826815@163.com)
- * @brief 系统宏定义
+ * @brief 系统启动入口
  * @version 1.0
  * @date 2024-08-21
+ * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
  * 
  * The MIT License (MIT)
  * 
@@ -27,16 +30,34 @@
  * 
  */
 
-#ifndef _VIRTUAL_OS_H_
-#define _VIRTUAL_OS_H_
+#include <stdint.h>
 
-#include "utils/stimer.h"
+#include "driver/virtual_os_driver.h"
+#include "core/virtual_os_run.h"
+#include "core/virtual_os_defines.h"
 
-/**
- * @brief 框架调度初始化
- * 
- * @param port 时钟配置
- */
-void virtual_os_init(struct timer_port *port);
+extern void dal_init(void);
 
-#endif /* _VIRTUAL_OS_H_ */
+extern void (*__start_early_driver[])(void);
+extern void (*__stop_early_driver[])(void);
+
+static void register_drivers(void)
+{
+	size_t driver_count = __stop_early_driver - __start_early_driver;
+
+	for (size_t i = 0; i < driver_count; i++) {
+		if (__start_early_driver[i])
+			__start_early_driver[i]();
+	}
+}
+
+void virtual_os_init(struct timer_port *port)
+{
+	driver_manage_init();
+
+	register_drivers();
+
+	dal_init();
+
+	virtual_os_assert(stimer_init(port));
+}

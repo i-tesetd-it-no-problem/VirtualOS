@@ -5,7 +5,10 @@
  * @version 0.1
  * @date 2024-12-17
  *
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
+ * The MIT License (MIT)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +30,8 @@
  *
  */
 
-#ifndef _MODBUS_SLAVE_H
-#define _MODBUS_SLAVE_H
+#ifndef __VIRTUAL_OS_MODBUS_SLAVE_H__
+#define __VIRTUAL_OS_MODBUS_SLAVE_H__
 
 #include "modbus.h"
 
@@ -80,4 +83,4 @@ void mb_slv_destroy(mb_slv_handle handle);
  */
 void mb_slv_poll(mb_slv_handle handle);
 
-#endif
+#endif /* __VIRTUAL_OS_MODBUS_SLAVE_H__ */

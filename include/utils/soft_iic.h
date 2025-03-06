@@ -5,6 +5,9 @@
  * @version 1.0
  * @date 2024-08-12
  * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
  * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,8 +30,8 @@
  * 
  */
 
-#ifndef _VIRTUAL_OS_SOFT_IIC_H
-#define _VIRTUAL_OS_SOFT_IIC_H
+#ifndef __VIRTUAL_OS_SOFT_IIC_H__
+#define __VIRTUAL_OS_SOFT_IIC_H__
 
 #include <stdint.h>
 
@@ -57,4 +60,5 @@ uint8_t soft_iic_read_bytes(uint8_t addr, uint8_t reg, uint8_t len, uint8_t *buf
 */
 uint8_t soft_iic_init(
 	soft_iic_scl_out_f scl_out_f, soft_iic_sda_out_f sda_out_f, soft_iic_sda_in_f sda_in_f, soft_iic_delay_f delay_f);
-#endif /*_VIRTUAL_OS_SOFT_IIC_H*/
+	
+#endif /* __VIRTUAL_OS_SOFT_IIC_H__ */

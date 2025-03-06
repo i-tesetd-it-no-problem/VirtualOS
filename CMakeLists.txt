@@ -50,7 +50,7 @@ install(
 )
 
 install(
-    FILES ${CMAKE_CURRENT_LIST_DIR}/core/virtualos.ld
+    FILES ${CMAKE_CURRENT_LIST_DIR}/core/virtual_os.ld
     DESTINATION ldscript
 )
 

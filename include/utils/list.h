@@ -5,6 +5,9 @@
  * @version 1.0
  * @date 2024-08-12
  * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
  * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,8 +30,8 @@
  * 
  */
 
-#ifndef _VIRTUAL_OS_LINK_LIST_H
-#define _VIRTUAL_OS_LINK_LIST_H
+#ifndef __VIRTUAL_OS_LIST_H__
+#define __VIRTUAL_OS_LIST_H__
 
 #include <stdint.h>
 #include <stddef.h>
@@ -78,4 +81,4 @@ list_item *list_delete_tail(list_item *head);
  */
 uint8_t list_add_tail(list_item *head, list_item *item);
 
-#endif /*_VIRTUAL_OS_LINK_LIST_H*/
+#endif /* __VIRTUAL_OS_LIST_H__ */

@@ -5,6 +5,9 @@
  * @version 1.0
  * @date 2024-08-12
  * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
  * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,9 +30,8 @@
  * 
  */
 
-
-#ifndef _VIRTUAL_OS_CRC_H
-#define _VIRTUAL_OS_CRC_H
+#ifndef __VIRTUAL_OS_CRC_H__
+#define __VIRTUAL_OS_CRC_H__
 
 #define VIRTUAL_OS_CRC_EN
 
@@ -40,6 +42,6 @@
 uint16_t crc16_update(uint16_t crc, uint8_t data);
 uint16_t crc16_update_bytes(uint16_t crc, uint8_t *data, uint32_t len);
 
-#endif /*VIRTUAL_OS_CRC_EN*/
+#endif /* VIRTUAL_OS_CRC_EN */
 
-#endif /*_VIRTUAL_OS_CRC_H*/
+#endif /* __VIRTUAL_OS_CRC_H__ */

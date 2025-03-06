@@ -1,9 +1,12 @@
 /**
- * @file driver.h
+ * @file virtual_os_driver.h
  * @author wenshuyu (wsy2161826815@163.com)
  * @brief 驱动管理
  * @version 1.0
  * @date 2024-08-21
+ * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
  * 
  * The MIT License (MIT)
  * 
@@ -33,8 +36,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define MAX_DEVICE_NUM (32) /* 最大设备数量 */
-
 #define DRV_ERR_NONE (0)		 /* 无错误 */
 #define DRV_ERR_INVALID (-1)	 /* 无效参数 */
 #define DRV_ERR_OVERFLOW (-2)	 /* 超过最大设备数量 */
@@ -52,12 +53,10 @@ void driver_manage_init(void);
 /**
  * @brief 查找设备
  * 
- * @param name 哈希表名
+ * @param name 设备名
  * @return struct drv_device* 设备结构体
  */
 struct drv_device *find_device(const char *name);
-
-struct drv_file;
 
 // 驱动文件
 struct drv_file {
@@ -74,7 +73,13 @@ struct drv_device {
 };
 
 /****************************USER API*****************************/
-// 文件操作接口
+
+/**
+ * @brief 文件操作接口 一一对应于应用层的`dal/dal_opts.h`中的接口
+ * 
+ * 所有对外设的读写控制等都通过此接口进行，在调用初始化`driver_register`的时候会注册进驱动中
+ * 
+ */
 struct file_operations {
 	int (*open)(struct drv_file *file);						 /* 打开设备 返回结果参考错误码 */
 	int (*close)(struct drv_file *file);					 /* 关闭设备 返回结果参考错误码 */
@@ -83,12 +88,25 @@ struct file_operations {
 	size_t (*write)(struct drv_file *file, void *buf, size_t len, size_t *offset); /* 写入数据 */
 };
 
-// 驱动注册宏
+/**
+ * @brief 驱动注册宏
+ * 
+ * 例如: EXPORT_DRIVER(uart_driver_init);
+ * 通常`uart_driver_init`是一个只调用`driver_register`的空函数
+ * 
+ */
 #define EXPORT_DRIVER(_func)                                                                                           \
 	void _func(void);                                                                                                  \
 	void (*_func##_ptr)(void) __attribute__((section(".early_driver"), used)) = &_func;
 
-// 驱动初始化函数指针
+/**
+ * @brief 驱动初始化函数指针
+ *
+ * @param dev 设备结构体 如果此设备是一个存储类设备，需要设置`dev_size`，初始化大小，否则可以不关注此参数
+ *
+ * 通常这个函数用于执行初始化外设设备
+ * 
+ */
 typedef bool (*driver_init)(struct drv_device *dev);
 
 /**

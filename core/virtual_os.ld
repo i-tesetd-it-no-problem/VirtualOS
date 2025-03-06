@@ -1,11 +1,14 @@
 /**
- * @file bus.h
+ * @file virtual_os.ld
  * @author wenshuyu (wsy2161826815@163.com)
- * @brief 总线数据类型
- * @version 0.1
- * @date 2024-12-31
+ * @brief VirtualOS的链接脚本
+ * @version 1.0
+ * @date 2024-08-21
  * 
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
+ * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -14,23 +17,31 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  * 
  */
 
-#ifndef __VIRTUAL_OS_BUS_H__
-#define __VIRTUAL_OS_BUS_H__
 
-#include "driver/can_bus.h"
-#include "driver/iic_bus.h"
-
-#endif /* __VIRTUAL_OS_BUS_H__ */
+/**
+ * @brief 此段存放所有的驱动注册代码
+ * 
+ * 所有通过 EXPORT_DRIVER 宏导出的驱动都将被链接到这个段中
+ */
+SECTIONS
+{
+    .early_driver :
+    {
+        __start_early_driver = .;
+        KEEP(*(.early_driver))
+        __stop_early_driver = .;
+    } > FLASH
+}

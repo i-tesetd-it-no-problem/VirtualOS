@@ -5,6 +5,9 @@
  * @version 1.0
  * @date 2024-08-12
  * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
  * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,15 +30,15 @@
  * 
  */
 
-#ifndef _VIRTUAL_OS_STIMER_H
-#define _VIRTUAL_OS_STIMER_H
+#ifndef __VIRTUAL_OS_STIMER_H__
+#define __VIRTUAL_OS_STIMER_H__
 
 #define STIMER_PERIOD_PER_TICK_MS (1)
 
 #include <stdint.h>
 #include <stdbool.h>
 
-/**************************************系统API/**************************************/
+/**************************************系统API**************************************/
 
 typedef void (*stimer_timeout_process)(void);
 typedef void (*stimer_base_init)(uint32_t period_ms, stimer_timeout_process f_timeout);
@@ -56,7 +59,7 @@ struct timer_port {
  */
 bool stimer_init(struct timer_port *port);
 
-/**************************************用户可用API/**************************************/
+/**************************************用户可用API**************************************/
 
 /**
  * @brief 创建周期任务
@@ -83,4 +86,4 @@ bool defer_task_create(stimer_f task_f, uint32_t ms);
  */
 void stimer_start(void);
 
-#endif /*_VIRTUAL_OS_STIMER_H*/
+#endif /* __VIRTUAL_OS_STIMER_H__ */

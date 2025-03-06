@@ -5,6 +5,9 @@
  * @version 1.0
  * @date 2024-08-12
  * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
  * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,6 +33,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "dal/dal_opt.h"
+#include "driver/virtual_os_driver.h"
+#include "core/virtual_os_config.h"
+
+#define FD_MAX_SIZE (VIRTUALOS_MAX_DEV + RESERVED_FDS)
 
 typedef struct {
 	struct drv_device *dev;

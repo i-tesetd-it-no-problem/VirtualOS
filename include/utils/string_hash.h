@@ -5,6 +5,9 @@
  * @version 1.0
  * @date 2024-08-12
  * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
  * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,8 +30,8 @@
  * 
  */
 
-#ifndef _VIRTUAL_OS_STRING_HASH_H
-#define _VIRTUAL_OS_STRING_HASH_H
+#ifndef __VIRTUAL_OS_STRING_HASH_H__
+#define __VIRTUAL_OS_STRING_HASH_H__
 
 #include <stdint.h>
 #include <stddef.h>
@@ -106,4 +109,4 @@ enum hash_error hash_get_all_keys(struct hash_table *hash_table, char ***keys, s
  */
 void destroy_hash_table(struct hash_table *hash_table);
 
-#endif /* _VIRTUAL_OS_STRING_HASH_H */
+#endif /* __VIRTUAL_OS_STRING_HASH_H__ */

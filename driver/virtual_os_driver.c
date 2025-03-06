@@ -1,9 +1,12 @@
 /**
- * @file driver.c
+ * @file virtual_os_driver.c
  * @author wenshuyu (wsy2161826815@163.com)
- * @brief 设备注册
+ * @brief 驱动管理
  * @version 1.0
  * @date 2024-08-21
+ * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
  * 
  * The MIT License (MIT)
  * 
@@ -29,8 +32,9 @@
 
 #include <stdlib.h>
 #include "utils/string_hash.h"
-#include "driver/driver.h"
-#include "core/virtual_assert.h"
+#include "driver/virtual_os_driver.h"
+#include "core/virtual_os_defines.h"
+#include "core/virtual_os_config.h"
 
 static struct hash_table driver_table = { 0 };
 
@@ -40,7 +44,7 @@ static struct hash_table driver_table = { 0 };
  */
 void driver_manage_init(void)
 {
-	virtual_os_assert(init_hash_table(&driver_table, MAX_DEVICE_NUM) == HASH_SUCCESS);
+	virtual_os_assert(init_hash_table(&driver_table, VIRTUALOS_MAX_DEV) == HASH_SUCCESS);
 }
 
 /**
@@ -87,7 +91,7 @@ free_dev:
 /**
  * @brief 查找设备
  * 
- * @param name 哈希表名
+ * @param name 设备名
  * @return struct drv_device* 设备结构体
  */
 struct drv_device *find_device(const char *name)

@@ -5,6 +5,9 @@
  * @version 1.0
  * @date 2024-08-19
  * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
  * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,6 +30,9 @@
  * 
  */
 
+#ifndef __VIRTUAL_OS_SIMPLE_SHELL_H__
+#define __VIRTUAL_OS_SIMPLE_SHELL_H__
+
 #include <stdbool.h>
 #include <stdint.h>
 #include "string_hash.h"
@@ -42,7 +48,8 @@
  * @param out_len 输出缓冲区长度
  *
  */
-typedef void (*sp_shell_cb)(int argc, char *argv[], uint8_t *out, size_t buffer_size, size_t *out_len); /* 命令回调函数 */
+typedef void (*sp_shell_cb)(
+	int argc, char *argv[], uint8_t *out, size_t buffer_size, size_t *out_len); /* 命令回调函数 */
 
 struct sp_shell_cmd_t {
 	const char *name;		 /* 命令名 */
@@ -92,3 +99,5 @@ void shell_dispatch(void); /* 调度shell */
 			command_list[command_count++] = &shell_cmd_##_name;                                                        \
 		}                                                                                                              \
 	}
+
+#endif /* __VIRTUAL_OS_SIMPLE_SHELL_H__ */

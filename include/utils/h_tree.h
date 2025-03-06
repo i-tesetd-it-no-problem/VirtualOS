@@ -5,6 +5,9 @@
  * @version 1.0
  * @date 2024-08-20
  * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
  * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,8 +30,8 @@
  * 
  */
 
-#ifndef _VIRTUALOS_H_TREE_H_
-#define _VIRTUALOS_H_TREE_H_
+#ifndef __VIRTUALOS_H_TREE_H__
+#define __VIRTUALOS_H_TREE_H__
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -107,4 +110,4 @@ void traverse_tree_bfs(struct tree_node *root, visit_func visit);
  */
 struct tree_node *get_tree_root(struct tree_node *node);
 
-#endif /* _VIRTUALOS_H_TREE_H_ */
+#endif /* __VIRTUALOS_H_TREE_H__ */

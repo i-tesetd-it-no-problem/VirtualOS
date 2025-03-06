@@ -149,7 +149,7 @@ void delay_one_tick(uint32_t tick);
 #include "systick.h"
 
 #include "utils/stimer.h" // 调度组件
-#include "core/virtualos_run.h" // 框架初始化
+#include "core/virtual_os_run.h" // 框架初始化
 
 // 延时计数器
 static volatile uint32_t delay_tick = 0U;
@@ -253,7 +253,7 @@ int main(void)
 
 ```c
 #include <stdbool.h>
-#include "driver/driver.h" /* 驱动注册头文件 */
+#include "driver/virtual_os_driver.h" /* 驱动注册头文件 */
 
 #include "gd32f30x.h"
 

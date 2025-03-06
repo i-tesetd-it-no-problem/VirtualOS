@@ -44,7 +44,7 @@ struct can_frame {
 #include <stdint.h>
 #include <string.h>
 
-#include "driver/driver.h" /* 驱动注册头文件 */
+#include "driver/virtual_os_driver.h" /* 驱动注册头文件 */
 #include "utils/queue.h"
 #include "driver/can_bus.h"
 

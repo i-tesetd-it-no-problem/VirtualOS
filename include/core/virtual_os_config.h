@@ -1,9 +1,12 @@
 /**
- * @file virtualos.ld
+ * @file virtual_os_config.h
  * @author wenshuyu (wsy2161826815@163.com)
- * @brief VirtualOS的链接脚本
+ * @brief 框架配置
  * @version 1.0
- * @date 2024-08-21
+ * @date 2025-03-04
+ * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
  * 
  * The MIT License (MIT)
  * 
@@ -27,18 +30,17 @@
  * 
  */
 
+#ifndef __VIRTUAL_OS_CONFIG_H__
+#define __VIRTUAL_OS_CONFIG_H__
 
 /**
- * @brief 此段存放所有的驱动注册代码
- * 
- * 所有通过 EXPORT_DRIVER 宏导出的驱动都将被链接到这个段中
- */
-SECTIONS
-{
-    .early_driver :
-    {
-        __start_early_driver = .;
-        KEEP(*(.early_driver))
-        __stop_early_driver = .;
-    } > FLASH
-}
+* @brief 
+* 
+* 请在编译静态库之前修改此文件的宏定义
+* 在编译静态库后修改此文件的宏定义将不会生效
+* 
+*/
+
+#define VIRTUALOS_MAX_DEV (10) /* 最大设备数量 同时用于驱动数量以及文件描述符的数量 */
+
+#endif /* __VIRTUAL_OS_CONFIG_H__ */

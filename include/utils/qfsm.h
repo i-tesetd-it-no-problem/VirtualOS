@@ -5,6 +5,9 @@
  * @version 1.0
  * @date 2024-08-12
  * 
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
  * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,8 +30,8 @@
  * 
  */
 
-#ifndef _VIRTUAL_OS_QFSM_H
-#define _VIRTUAL_OS_QFSM_H
+#ifndef __VIRTUAL_OS_QFSM_H__
+#define __VIRTUAL_OS_QFSM_H__
 
 #include <stdint.h>
 
@@ -83,4 +86,5 @@ void qfsm_init(qfsm_t *me, qstate_handler f_initial, qevent_t const *e);
  * @param e 事件
  */
 void qfsm_dispatch(qfsm_t * const me, qevent_t const *e);
-#endif /*_VIRTUAL_OS_QFSM_H*/
+
+#endif /* __VIRTUAL_OS_QFSM_H__ */

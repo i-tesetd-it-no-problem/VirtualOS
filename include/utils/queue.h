@@ -5,7 +5,10 @@
  * @version 0.1
  * @date 2024-12-19
  *
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
+ * The MIT License (MIT)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +30,8 @@
  *
  */
 
-#ifndef _QUEUE_H
-#define _QUEUE_H
+#ifndef __VIRTUAL_OS_QUEUE_H__
+#define __VIRTUAL_OS_QUEUE_H__
 
 #include <stdint.h>
 #include <stddef.h>
@@ -148,4 +151,4 @@ void queue_advance_rd(struct queue_info *q, size_t units);
  */
 void queue_advance_wr(struct queue_info *q, size_t units);
 
-#endif /* _QUEUE_H */
+#endif /* __VIRTUAL_OS_QUEUE_H__ */

@@ -5,7 +5,10 @@
  * @version 0.1
  * @date 2024-12-27
  * 
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2024-2025
+ * @see repository: https://github.com/i-tesetd-it-no-problem/VirtualOS.git
+ * 
+ * The MIT License (MIT)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +30,8 @@
  * 
  */
 
-#ifndef _VIRTUAL_OS_LOG_H_
-#define _VIRTUAL_OS_LOG_H_
+#ifndef __VIRTUAL_OS_LOG_H__
+#define __VIRTUAL_OS_LOG_H__
 
 #include <stdint.h>
 #include <stddef.h>
@@ -90,4 +93,4 @@ void syslog_set_level(enum log_level level);
 #define log_w(format, ...) origin_log(LOG_LEVEL_WARN, __func__, __LINE__, format, ##__VA_ARGS__)  /* 警告日志 */
 #define log_e(format, ...) origin_log(LOG_LEVEL_ERROR, __func__, __LINE__, format, ##__VA_ARGS__) /* 错误日志 */
 
-#endif /* _VIRTUAL_OS_LOG_H_ */
+#endif /* __VIRTUAL_OS_LOG_H__ */
