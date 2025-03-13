@@ -37,7 +37,7 @@ struct serial_opts {
 #include <stdlib.h>
 #include <string.h>
 
-#include "virtual_os_driver/virtual_os_driver.h" /* 必要的头文件 */
+#include "driver/virtual_os_driver.h" /* 必要的头文件 */
 #include "utils/queue.h"   /* 环形队列 */
 
 #include "gd32f30x.h"

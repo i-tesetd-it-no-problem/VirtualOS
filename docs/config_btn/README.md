@@ -11,7 +11,7 @@
 ```c
 #include <stdbool.h>
 #include <stdint.h>
-#include "virtual_os_driver/virtual_os_driver.h" /* 驱动注册头文件 */
+#include "driver/virtual_os_driver.h" /* 驱动注册头文件 */
 
 #include "gd32f30x.h"
 

@@ -2,7 +2,7 @@
 
 ```c
 #include <stdbool.h>
-#include "virtual_os_driver/virtual_os_driver.h" /* 驱动注册头文件 */
+#include "driver/virtual_os_driver.h" /* 驱动注册头文件 */
 
 static const char xxx_name[] = "xxx"; /* 确保此设备名项目中唯一 */
 static int xxx_open(struct drv_file *file);
