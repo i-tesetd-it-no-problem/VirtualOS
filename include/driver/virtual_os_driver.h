@@ -34,6 +34,7 @@
 #define __VIRTUAL_OS_DRIVER_H__
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stddef.h>
 
 #define DRV_ERR_NONE (0)		 /* 无错误 */
@@ -119,6 +120,21 @@ typedef bool (*driver_init)(struct drv_device *dev);
  * @return false 
  */
 bool driver_register(driver_init drv_init, const struct file_operations *file_opts, const char *name);
+
+/**
+ * @brief 遍历所有设备名
+ * 
+ * @param visit 访问函数
+ */
+void visit_all_device_name(void (*visit)(const char *name));
+
+/**
+ * @brief 填充所有设备名到缓冲区 以换行符分割
+ * 
+ * @param buf 
+ * @param len 
+ */
+void fill_all_device_name(char *buf, size_t len);
 
 /**
  * @brief 设置设备私有数据

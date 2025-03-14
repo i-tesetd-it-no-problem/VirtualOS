@@ -35,6 +35,8 @@
 #include "driver/virtual_os_driver.h"
 #include "core/virtual_os_run.h"
 #include "core/virtual_os_defines.h"
+#include "core/virtual_os_config.h"
+#include "utils/stimer.h"
 
 extern void dal_init(void);
 
@@ -60,4 +62,12 @@ void virtual_os_init(struct timer_port *port)
 	dal_init();
 
 	virtual_os_assert(stimer_init(port));
+
+#if VIRTUALOS_SHELL_ENABLE
+	// 使能Shell
+	extern void virtual_os_shell_init(void);
+	extern void virtual_os_shell_task(void);
+	stimer_task_create(virtual_os_shell_init, virtual_os_shell_task, VIRTUALOS_SHELL_PRIOD_MS);
+#endif
+
 }

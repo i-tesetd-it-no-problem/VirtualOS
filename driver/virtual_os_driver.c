@@ -31,10 +31,13 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
+
 #include "utils/string_hash.h"
 #include "driver/virtual_os_driver.h"
 #include "core/virtual_os_defines.h"
 #include "core/virtual_os_config.h"
+#include "core/virtual_os_defines.h"
 
 static struct hash_table driver_table = { 0 };
 
@@ -44,7 +47,7 @@ static struct hash_table driver_table = { 0 };
  */
 void driver_manage_init(void)
 {
-	virtual_os_assert(init_hash_table(&driver_table, VIRTUALOS_MAX_DEV) == HASH_SUCCESS);
+	virtual_os_assert(init_hash_table(&driver_table, VIRTUALOS_MAX_DEV_NUM) == HASH_SUCCESS);
 }
 
 /**
@@ -73,11 +76,23 @@ bool driver_register(driver_init drv_init, const struct file_operations *file_op
 	if (!drv_init(dev))
 		goto free_file;
 
-	err = hash_insert(&driver_table, name, (void *)dev);
+	char *new_name = (char *)name;
+	if (unlikely(strlen(name) >= VIRTUALOS_MAX_DEV_NAME_LEN - 1)) {
+		new_name = (char *)calloc(1, VIRTUALOS_MAX_DEV_NAME_LEN);
+		if (!new_name)
+			goto free_file;
+		strncpy(new_name, name, VIRTUALOS_MAX_DEV_NAME_LEN - 1);
+		new_name[VIRTUALOS_MAX_DEV_NAME_LEN - 1] = '\0';
+	}
+
+	err = hash_insert(&driver_table, (const char *)new_name, (void *)dev);
 	if (err != HASH_SUCCESS)
-		goto free_file;
+		goto free_name;
 
 	return true;
+
+free_name:
+	free(new_name);
 
 free_file:
 	free(dev->file);
@@ -103,6 +118,63 @@ struct drv_device *find_device(const char *name)
 		return dev;
 	else
 		return NULL;
+}
+
+/**
+ * @brief 访问所有设备名
+ * 
+ * @param visit 访问函数
+ */
+void visit_all_device_name(void (*visit)(const char *name))
+{
+	if (!visit)
+		return;
+
+	enum hash_error err = HASH_KEY_NOT_FOUND;
+	char **keys = NULL;
+	size_t num_keys = 0;
+	err = hash_get_all_keys(&driver_table, &keys, &num_keys);
+	if (err == HASH_SUCCESS) {
+		for (size_t i = 0; i < num_keys; i++) {
+			visit(keys[i]);
+			free(keys[i]);
+		}
+		free(keys);
+	}
+}
+
+/**
+ * @brief 填充所有设备名到缓冲区 以换行符`\r\n`分割
+ * 
+ * @param buf 
+ * @param len 
+ */
+void fill_all_device_name(char *buf, size_t len)
+{
+	if (!buf || !len)
+		return;
+
+	enum hash_error err = HASH_KEY_NOT_FOUND;
+	char **keys = NULL;
+	size_t num_keys = 0;
+	err = hash_get_all_keys(&driver_table, &keys, &num_keys);
+	if (err == HASH_SUCCESS) {
+		for (size_t i = 0; i < num_keys; i++) {
+			size_t name_len = strlen(keys[i]);
+			if (name_len + 1 > len)
+				break;
+			memcpy(buf, keys[i], name_len);
+			buf += name_len;
+			*buf++ = '\r';
+			*buf++ = '\n';
+			len -= name_len + 2;
+		}
+		if (len > 0)
+			*buf = '\0';
+		for (size_t i = 0; i < num_keys; i++)
+			free(keys[i]);
+		free(keys);
+	}
 }
 
 /**

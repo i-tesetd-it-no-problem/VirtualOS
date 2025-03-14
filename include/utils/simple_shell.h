@@ -45,6 +45,10 @@
 #define MAX_COMMANDS 16	   // 系统可注册命令的最大数量
 #define MAX_OUT_LEN 512	   // 命令输出缓冲区长度
 
+// 1:启用 0:不启用
+#define SPS_ENABLE_TAB_COMPLETE (1) // 启用tab自动补全功能
+#define SPS_ENABLE_HISTORY (1)		// 启用历史记录功能 上下箭头可切换历史记录
+
 /**
  * @brief 命令回调函数
  * @param argc 参数数量
@@ -72,6 +76,22 @@ struct sp_shell_opts {
 	size_t (*write)(uint8_t *buf, size_t len); /* 写函数指针 */
 };
 
+/**
+ * @brief shell初始化
+ * 
+ * @param opts 回调接口
+ * @param welcome 自定义欢迎语，NULL则为默认值
+ * @return true 
+ * @return false 
+ */
+bool simple_shell_init(struct sp_shell_opts *opts, const char *welcome);
+
+/**
+ * @brief 启动调度
+ * 
+ */
+void shell_dispatch(void);
+
 // 命令注册宏
 #define SPS_EXPORT_CMD(_name, _callback, _description)                                                                 \
 	const struct sp_shell_cmd_t shell_cmd_##_name = {                                                                  \
@@ -86,20 +106,5 @@ struct sp_shell_opts {
 		if (command_count < MAX_COMMANDS)                                                                              \
 			command_list[command_count++] = (struct sp_shell_cmd_t *)&shell_cmd_##_name;                               \
 	}
-
-/**
- * @brief shell初始化
- * 
- * @param opts 回调接口
- * @return true 
- * @return false 
- */
-bool simple_shell_init(struct sp_shell_opts *opts);
-
-/**
- * @brief 启动调度
- * 
- */
-void shell_dispatch(void);
 
 #endif /* __VIRTUAL_OS_SIMPLE_SHELL_H__ */

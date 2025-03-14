@@ -36,15 +36,15 @@
 #include "driver/virtual_os_driver.h"
 #include "core/virtual_os_config.h"
 
-#define FD_MAX_SIZE (VIRTUALOS_MAX_DEV + RESERVED_FDS)
+#define FD_MAX_SIZE (VIRTUALOS_MAX_DEV_NUM + RESERVED_FDS)
 
-typedef struct {
+struct fd_t {
 	struct drv_device *dev;
 	bool is_used;
 	size_t offset;
-} fd_t;
+};
 
-static fd_t fds[FD_MAX_SIZE] = { 0 };
+static struct fd_t fds[FD_MAX_SIZE] = { 0 };
 
 static int alloc_fd(void)
 {

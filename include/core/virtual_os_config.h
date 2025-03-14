@@ -41,6 +41,15 @@
 * 
 */
 
-#define VIRTUALOS_MAX_DEV (10) /* 最大设备数量 同时用于驱动数量以及文件描述符的数量 */
+// 设备数量配置
+#define VIRTUALOS_MAX_DEV_NUM (10)		/* 最大设备数量 同时用于驱动数量以及文件描述符的数量 */
+#define VIRTUALOS_MAX_DEV_NAME_LEN (16) /* 最大设备名长度(包括\0) */
+
+// Shell使能配置
+// 注: 如果框架使用静态库编译则不建议使用此功能，因为Shell与具体的芯片平台串口有强依赖关系，不适用于静态库链接
+// 使用静态库链接时，用户可以通过在应用层单独使用`utils/simple_shell`组件，使用应用层的接口进行注册
+// 若要使用此功能，请将框架源码与应用工程一起编译，使能此宏会提供一些框架提供的内置命令
+#define VIRTUALOS_SHELL_ENABLE (0)	  /* 使能shell 1:使能 0:禁止 */
+#define VIRTUALOS_SHELL_PRIOD_MS (25) /* shell任务周期 默认25ms */
 
 #endif /* __VIRTUAL_OS_CONFIG_H__ */

@@ -46,8 +46,12 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-#define MAIN_NAME "VirtualOS"			// 前缀
-#define PROMPT MAIN_NAME "@admin\r\n$ " // 终端名
+#define NEW_LINE "\r\n"
+#define MAIN_NAME "VirtualOS"					// 前缀
+#define PROMPT MAIN_NAME "@admin" NEW_LINE "$ " // 终端名
+#define WELCOME "Welcome to Simple Shell" NEW_LINE
+#define TIPS "You can type `list` to get all available commands." NEW_LINE NEW_LINE PROMPT
+#define DEFAULT_MSG WELCOME TIPS
 
 // 全局命令缓存
 const struct sp_shell_cmd_t *command_list[MAX_COMMANDS];
@@ -58,9 +62,11 @@ int command_count = 0;
 #define TX_QUEUE_SIZE MAX_OUT_LEN
 
 // 历史记录
+#if SPS_ENABLE_HISTORY
 static char history[HISTORY_SIZE][SPS_CMD_MAX];
 static int history_count = 0;
 static int history_index = -1; // -1表示不在历史回放模式
+#endif
 
 static struct hash_table shell_cmd_table; // 命令哈希表
 
@@ -113,7 +119,7 @@ static void hash_save_cmd_once(void)
 // 添加发送消息
 static void add_msg(uint8_t *msg, size_t len)
 {
-	if (len == 0)
+	if (!len || !msg)
 		return;
 
 	// 先写入长度
@@ -128,9 +134,9 @@ static void add_msg(uint8_t *msg, size_t len)
 // 加入历史记录
 static void add_to_history(const char *cmd)
 {
-	if (cmd[0] == '\0') {
+#if SPS_ENABLE_HISTORY
+	if (!cmd || cmd[0] == '\0')
 		return; // 忽略空命令
-	}
 
 	if (history_count < HISTORY_SIZE) {
 		strncpy(history[history_count], cmd, SPS_CMD_MAX - 1);
@@ -147,11 +153,15 @@ static void add_to_history(const char *cmd)
 
 	// 重置索引
 	history_index = -1;
+#endif
 }
 
 // 把一行命令切分成argv数组、argc数量
 static void parse_command(char *input, char *argv[], int *argc)
 {
+	if (!input || !argv || !argc)
+		return;
+
 	*argc = 0;
 	bool in_quotes = false;
 	char *p = input;
@@ -205,6 +215,9 @@ static void parse_command(char *input, char *argv[], int *argc)
 // 处理用户输入命令
 static void process_command(char *cmd_str, uint8_t *output, size_t *output_len)
 {
+	if (!cmd_str || !output || !output_len)
+		return;
+
 	char *argv[SPS_CMD_MAX_ARGS] = { 0 };
 	int argc = 0;
 	parse_command(cmd_str, argv, &argc); // 解析命令
@@ -221,12 +234,16 @@ static void process_command(char *cmd_str, uint8_t *output, size_t *output_len)
 		// 不存在命令
 		static const char *err_msg = "command not found\r\n";
 		memcpy(output, err_msg, strlen(err_msg));
+		*output_len = strlen(err_msg);
 	}
 }
 
 // 重新命令 用于切换历史记录
 static void rewrite_cmdline(struct shell_context *sh_ctx, size_t del_cnt, uint8_t *new_cmd, size_t new_cmd_len)
 {
+	if (!sh_ctx || !new_cmd || !new_cmd_len)
+		return;
+
 	uint8_t send_buf[SPS_CMD_MAX * 4]; // 每字符 3字节退格 + 新命令
 	size_t pos = 0;
 
@@ -250,9 +267,13 @@ static void rewrite_cmdline(struct shell_context *sh_ctx, size_t del_cnt, uint8_
 // 处理换行
 static void handle_newline(struct shell_context *sh_ctx)
 {
+	if (!sh_ctx)
+		return;
+
 	// 查找命令并执行
-	uint8_t output[MAX_OUT_LEN] = { '\r', '\n' };
-	size_t output_len = MAX_OUT_LEN - 2;
+	uint8_t output[MAX_OUT_LEN] = { NEW_LINE[0], NEW_LINE[1] };
+	uint8_t new_line_len = strlen(NEW_LINE);
+	size_t output_len = MAX_OUT_LEN - new_line_len;
 
 	if (sh_ctx->cmd_len > 0) {
 		sh_ctx->cmd_buf[sh_ctx->cmd_len] = '\0';
@@ -260,29 +281,32 @@ static void handle_newline(struct shell_context *sh_ctx)
 		add_to_history((const char *)sh_ctx->cmd_buf); // 加入历史记录
 
 		// 执行命令
-		process_command((char *)sh_ctx->cmd_buf, output + 2, &output_len);
+		process_command((char *)sh_ctx->cmd_buf, output + new_line_len, &output_len);
 
 		// 清空输入
 		memset(sh_ctx->cmd_buf, 0, SPS_CMD_MAX);
 		sh_ctx->cmd_len = 0;
 	} else {
-		memcpy(output + 2, "\r\n", 2);
-		output_len = 2;
+		memcpy(output + new_line_len, NEW_LINE, new_line_len);
+		output_len = new_line_len;
 	}
 
-	size_t remain_len = MAX_OUT_LEN - 2 - output_len;
+	size_t remain_len = MAX_OUT_LEN - new_line_len - output_len;
 	size_t cpy_len = MIN(remain_len, strlen(PROMPT));
 
 	history_index = -1;
-	memcpy(output + 2 + output_len, PROMPT, cpy_len);
+	memcpy(output + new_line_len + output_len, PROMPT, cpy_len);
 
 	// 加入新行
-	add_msg(output, output_len + 2 + strlen(PROMPT));
+	add_msg(output, output_len + new_line_len + strlen(PROMPT));
 }
 
 // 删除键
 static void handle_backspace(struct shell_context *sh_ctx)
 {
+	if (!sh_ctx)
+		return;
+
 	if (sh_ctx->cmd_len > 0) {
 		// 输出退格序列覆盖
 		static const char bs_seq[] = "\b \b";
@@ -295,6 +319,10 @@ static void handle_backspace(struct shell_context *sh_ctx)
 // 上箭头
 static void handle_up_arrow(struct shell_context *sh_ctx)
 {
+#if SPS_ENABLE_HISTORY
+	if (!sh_ctx)
+		return;
+
 	if (history_count == 0)
 		return;
 
@@ -312,12 +340,14 @@ static void handle_up_arrow(struct shell_context *sh_ctx)
 
 	// 重写
 	rewrite_cmdline(sh_ctx, del_cnt, sh_ctx->cmd_buf, sh_ctx->cmd_len);
+#endif
 }
 
 // 下箭头
 static void handle_down_arrow(struct shell_context *sh_ctx)
 {
-	if (history_index == -1 || history_count == 0)
+#if SPS_ENABLE_HISTORY
+	if (history_index == -1 || history_count == 0 || !sh_ctx)
 		return;
 
 	history_index++;
@@ -336,11 +366,88 @@ static void handle_down_arrow(struct shell_context *sh_ctx)
 
 		rewrite_cmdline(sh_ctx, del_cnt, sh_ctx->cmd_buf, sh_ctx->cmd_len);
 	}
+#endif
+}
+
+// 处理TAB键补全
+static void handle_tab_completion(struct shell_context *sh_ctx)
+{
+#if SPS_ENABLE_TAB_COMPLETE
+	if (!sh_ctx || sh_ctx->cmd_len == 0)
+		return;
+
+	char *prefix = (char *)sh_ctx->cmd_buf;
+	int prefix_len = sh_ctx->cmd_len;
+
+	int match_count = 0;
+	const char *matches[MAX_COMMANDS];
+	int max_matches = MAX_COMMANDS;
+
+	for (int i = 0; i < command_count; i++) {
+		const struct sp_shell_cmd_t *cmd = command_list[i];
+		if (!cmd)
+			continue;
+		if (strncmp(cmd->name, prefix, prefix_len) == 0) {
+			if (match_count < max_matches)
+				matches[match_count++] = cmd->name;
+		}
+	}
+
+	if (match_count == 0) {
+		// 无匹配，不处理
+		return;
+	} else if (match_count == 1) {
+		const char *cmd_name = matches[0];
+		size_t cmd_len = strlen(cmd_name);
+		if (cmd_len >= SPS_CMD_MAX) {
+			return;
+		}
+
+		memcpy(sh_ctx->cmd_buf, cmd_name, cmd_len);
+		sh_ctx->cmd_len = cmd_len;
+		sh_ctx->cmd_buf[cmd_len] = '\0';
+		size_t suffix_len = cmd_len - prefix_len;
+		if (suffix_len > 0)
+			sh_ctx->opts->write((uint8_t *)(cmd_name + prefix_len), suffix_len); // 输出补全部分
+	} else {
+		// 多个匹配，显示所有候选
+		uint8_t tmp_buf[TX_QUEUE_SIZE];
+		size_t pos = 0;
+
+		memcpy(tmp_buf + pos, NEW_LINE, strlen(NEW_LINE));
+		pos += strlen(NEW_LINE);
+
+		for (int i = 0; i < match_count; i++) {
+			const char *name = matches[i];
+			size_t name_len = strlen(name);
+			if (pos + name_len + 1 > sizeof(tmp_buf))
+				break;
+
+			memcpy(tmp_buf + pos, name, name_len);
+			pos += name_len;
+			if (i < match_count - 1)
+				tmp_buf[pos++] = ' ';
+		}
+
+		memcpy(tmp_buf + pos, NEW_LINE, strlen(NEW_LINE));
+		pos += strlen(NEW_LINE);
+		memcpy(tmp_buf + pos, PROMPT, strlen(PROMPT));
+		pos += strlen(PROMPT);
+		memcpy(tmp_buf + pos, sh_ctx->cmd_buf, sh_ctx->cmd_len);
+		pos += sh_ctx->cmd_len;
+
+		sh_ctx->opts->write((uint8_t *)tmp_buf, pos); // 输出补全部分
+													  // add_msg(tmp_buf, pos);
+	}
+#endif
 }
 
 // 非特殊字符 直接回显
 static void handle_regular_char(struct shell_context *sh_ctx, uint8_t ch)
 {
+	if (!sh_ctx)
+		return;
+
 	if (sh_ctx->cmd_len < (SPS_CMD_MAX - 1)) {
 		sh_ctx->cmd_buf[sh_ctx->cmd_len++] = ch;
 		// 回显
@@ -357,6 +464,9 @@ static void handle_regular_char(struct shell_context *sh_ctx, uint8_t ch)
 // 解析输入的字符串
 static void shell_parser(struct shell_context *sh_ctx)
 {
+	if (!sh_ctx)
+		return;
+
 	uint8_t ch;
 	while (!is_queue_empty(&sh_ctx->rx_queue)) {
 		if (queue_get(&sh_ctx->rx_queue, &ch, 1) != 1)
@@ -373,15 +483,25 @@ static void shell_parser(struct shell_context *sh_ctx)
 			uint8_t seq[2];
 			if (queue_get(&sh_ctx->rx_queue, &seq[0], 1) && queue_get(&sh_ctx->rx_queue, &seq[1], 1)) {
 				if (seq[0] == '[') {
-					if (seq[1] == 'A') {
-						handle_up_arrow(sh_ctx); // 上箭头
-					} else if (seq[1] == 'B') {
-						handle_down_arrow(sh_ctx); // 下箭头
+					switch (seq[1]) {
+					case 'A':
+						handle_up_arrow(sh_ctx);
+						break; // 上
+					case 'B':
+						handle_down_arrow(sh_ctx);
+						break; // 下
+					case 'C':
+						break;
+					case 'D':
+						break;
+					default:
+						break;
 					}
-					// 左右箭头
 				}
 			}
-		} else
+		} else if (ch == 0x09)
+			handle_tab_completion(sh_ctx); // TAB补全
+		else
 			handle_regular_char(sh_ctx, ch); // 其他字符，回显
 	}
 }
@@ -389,9 +509,8 @@ static void shell_parser(struct shell_context *sh_ctx)
 // 刷新发送缓冲
 static void flush_tx_buffer(struct shell_context *sh_ctx)
 {
-	if (!sh_ctx || !sh_ctx->opts->write) {
+	if (!sh_ctx || !sh_ctx->opts->write)
 		return;
-	}
 
 	size_t flush_len = 0;
 
@@ -501,9 +620,8 @@ static void cmd_history(int argc, char *argv[], uint8_t *out, size_t buf_size, s
 	if (pos + 2 <= buf_size) {
 		out[pos++] = '\r';
 		out[pos++] = '\n';
-	} else if (pos + 1 <= buf_size) {
+	} else if (pos + 1 <= buf_size)
 		out[pos++] = '\r';
-	}
 
 	*out_len = pos;
 }
@@ -513,10 +631,11 @@ SPS_EXPORT_CMD(history, cmd_history, "show command history")
  * @brief shell初始化
  * 
  * @param opts 回调接口
+ * @param welcome 自定义欢迎语，NULL则为默认值
  * @return true 
  * @return false 
  */
-bool simple_shell_init(struct sp_shell_opts *opts)
+bool simple_shell_init(struct sp_shell_opts *opts, const char *welcome)
 {
 	if (!opts || !opts->read || !opts->write)
 		return false;
@@ -524,7 +643,7 @@ bool simple_shell_init(struct sp_shell_opts *opts)
 	memset(&shell_ctx, 0, sizeof(shell_ctx));
 	shell_ctx.opts = opts;
 
-	// 初始化哈希表（容量 = MAX_COMMANDS*2）减少碰撞
+	// 初始化哈希表（容量 = MAX_COMMANDS * 2）减少碰撞
 	if (init_hash_table(&shell_cmd_table, MAX_COMMANDS * 2) != HASH_SUCCESS)
 		return false;
 
@@ -541,16 +660,29 @@ bool simple_shell_init(struct sp_shell_opts *opts)
 
 	shell_ctx.is_active = true;
 
-	// 启动时先发出提示符
-	add_msg((uint8_t *)PROMPT, strlen(PROMPT));
+	// 启动信息
+	if (!welcome)
+		add_msg((uint8_t *)DEFAULT_MSG, strlen(DEFAULT_MSG));
+	else {
+		size_t tip_len = strlen(TIPS);
+		size_t welcome_len = strlen(welcome);
+		uint8_t *msg = malloc(tip_len + welcome_len);
+		if (!msg)
+			return false;
+
+		memcpy(msg, welcome, welcome_len);
+		memcpy(msg + welcome_len, TIPS, tip_len);
+		add_msg(msg, tip_len + welcome_len);
+		free(msg);
+	}
 
 	return true;
 }
 
 /**
-  * @brief 启动调度
-  * 
-  */
+ * @brief 启动调度
+ * 
+ */
 void shell_dispatch(void)
 {
 	if (!shell_ctx.is_active)
